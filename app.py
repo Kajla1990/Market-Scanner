@@ -27,18 +27,25 @@ st.title("🚀 Advanced Market Scanner & Trading Terminal")
 def load_data(ticker, tf):
     try:
         data = yf.download(ticker, period="60d", interval=tf, progress=False)
+        if data is None or data.empty:
+            return None
+        
+        # Flatten multi-index columns if present
         if isinstance(data.columns, pd.MultiIndex):
             data.columns = data.columns.get_level_values(0)
+            
+        # Ensure standard column names
+        data = data[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
         return data
     except:
         return None
 
 df = load_data(ticker_symbol, timeframe)
 
-if df is None or df.empty:
-    st.error("Could not fetch data. Please check the ticker symbol (e.g., RELIANCE.NS, TCS.NS, BTC-USD).")
+if df is None or df.empty or len(df) < 5:
+    st.error("Could not fetch valid data. Please check the ticker symbol (e.g., RELIANCE.NS, TCS.NS, BTC-USD).")
 else:
-    # Safe calculations avoiding NaN issues
+    # Indicators calculation
     df['EMA_9'] = df['Close'].ewm(span=9, adjust=False).mean()
     df['EMA_15'] = df['Close'].ewm(span=15, adjust=False).mean()
     
@@ -50,37 +57,42 @@ else:
     
     df['Support_5D'] = df['Low'].rolling(window=5).min()
     df['Resistance_5D'] = df['High'].rolling(window=5).max()
-
-    # Extracting scalar values safely
-    latest_price = float(df['Close'].iloc[-1].item() if hasattr(df['Close'].iloc[-1], 'item') else df['Close'].iloc[-1])
-    prev_price = float(df['Close'].iloc[-2].item() if hasattr(df['Close'].iloc[-2], 'item') else df['Close'].iloc[-2])
-    pct_diff = ((latest_price - prev_price) / prev_price) * 100
     
-    rsi_val = float(df['RSI'].iloc[-1].item() if hasattr(df['RSI'].iloc[-1], 'item') else df['RSI'].iloc[-1])
-    supp_val = float(df['Support_5D'].iloc[-1].item() if hasattr(df['Support_5D'].iloc[-1], 'item') else df['Support_5D'].iloc[-1])
-    ress_val = float(df['Resistance_5D'].iloc[-1].item() if hasattr(df['Resistance_5D'].iloc[-1], 'item') else df['Resistance_5D'].iloc[-1])
+    df = df.dropna()
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Live Price", f"₹{latest_price:.2f}", f"{pct_diff:.2f}%")
-    col2.metric("RSI (14)", f"{rsi_val:.2f}")
-    col3.metric("Support (5D)", f"₹{supp_val:.2f}")
-    col4.metric("Resistance (5D)", f"₹{ress_val:.2f}")
+    if not df.empty:
+        # Safe scalar extraction
+        latest_price = float(df['Close'].iloc[-1])
+        prev_price = float(df['Close'].iloc[-2])
+        pct_diff = ((latest_price - prev_price) / prev_price) * 100
+        
+        rsi_val = float(df['RSI'].iloc[-1])
+        supp_val = float(df['Support_5D'].iloc[-1])
+        ress_val = float(df['Resistance_5D'].iloc[-1])
 
-    st.subheader(f"📊 Price Chart for {ticker_symbol}")
-    st.line_chart(df[['Close', 'EMA_9', 'EMA_15']])
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Live Price", f"₹{latest_price:.2f}", f"{pct_diff:.2f}%")
+        col2.metric("RSI (14)", f"{rsi_val:.2f}")
+        col3.metric("Support (5D)", f"₹{supp_val:.2f}")
+        col4.metric("Resistance (5D)", f"₹{ress_val:.2f}")
 
-    st.subheader("💼 Paper Trading Demo")
-    qty = st.number_input("Quantity", min_value=1, value=10)
-    if st.button("Buy / Long"):
-        cost = latest_price * qty
-        if st.session_state.balance >= cost:
-            st.session_state.balance -= cost
-            st.session_state.trades.append({"Type": "BUY", "Ticker": ticker_symbol, "Price": latest_price, "Qty": qty})
-            st.success(f"Successfully bought {qty} shares of {ticker_symbol}!")
-        else:
-            st.error("Insufficient demo balance!")
-            
-    st.write(f"**Demo Account Balance:** ₹{st.session_state.balance:,.2f}")
-    if st.session_state.trades:
-        st.write("**Trade History:**")
-        st.table(pd.DataFrame(st.session_state.trades))
+        st.subheader(f"📊 Price Chart for {ticker_symbol}")
+        st.line_chart(df[['Close', 'EMA_9', 'EMA_15']])
+
+        st.subheader("💼 Paper Trading Demo")
+        qty = st.number_input("Quantity", min_value=1, value=10)
+        if st.button("Buy / Long"):
+            cost = latest_price * qty
+            if st.session_state.balance >= cost:
+                st.session_state.balance -= cost
+                st.session_state.trades.append({"Type": "BUY", "Ticker": ticker_symbol, "Price": latest_price, "Qty": qty})
+                st.success(f"Successfully bought {qty} shares of {ticker_symbol}!")
+            else:
+                st.error("Insufficient demo balance!")
+                
+        st.write(f"**Demo Account Balance:** ₹{st.session_state.balance:,.2f}")
+        if st.session_state.trades:
+            st.write("**Trade History:**")
+            st.table(pd.DataFrame(st.session_state.trades))
+    else:
+        st.warning("Insufficient data points after cleaning. Try a different timeframe.")
