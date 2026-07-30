@@ -5,38 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>kajla1990 - Pro Trading Terminal</title>
     <style>
-        body {
+        body, html {
             margin: 0;
+            padding: 0;
             background-color: #121212;
             color: #ffffff;
             font-family: Arial, sans-serif;
+            height: 100vh;
             overflow: hidden;
         }
         header {
             background: #1e1e1e;
-            padding: 12px;
+            padding: 10px 15px;
             text-align: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             border-bottom: 1px solid #333;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-left: 15px;
-            padding-right: 15px;
+            height: 40px;
         }
         .app-title {
             color: #2962ff;
         }
         .wallet-badge {
             background: #2a2e39;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
             color: #00e676;
         }
         .container {
-            height: calc(100vh - 115px);
+            height: calc(100vh - 95px);
             width: 100%;
             display: none;
         }
@@ -47,38 +48,37 @@
             height: 100%;
             width: 100%;
         }
-        /* Paper Trading Section Style */
         .paper-trading-panel {
-            padding: 20px;
+            padding: 15px;
             height: 100%;
             overflow-y: auto;
             background: #121212;
         }
         .card {
             background: #1e1e1e;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border: 1px solid #333;
         }
         .btn {
             background: #2962ff;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 10px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 8px;
         }
         .btn-success { background: #00e676; color: #000; }
         .btn-danger { background: #ff5252; }
         
-        /* Bottom Navigation Bar */
         .bottom-nav {
             position: fixed;
             bottom: 0;
+            left: 0;
             width: 100%;
             height: 55px;
             background: #1e1e1e;
@@ -122,7 +122,7 @@
               "locale": "en",
               "enable_publishing": false,
               "allow_symbol_change": true,
-              "calendar": true,
+              "calendar": false,
               "support_host": "https://www.tradingview.com"
             }
             </script>
@@ -135,19 +135,19 @@
             <h2>Paper Trading Dashboard</h2>
             <div class="card">
                 <h3>Virtual Account Balance</h3>
-                <p style="font-size: 24px; color: #00e676;" id="balanceText">₹5,00,000.00</p>
+                <p style="font-size: 22px; color: #00e676;" id="balanceText">₹5,00,000.00</p>
                 <p>Daily Trades Used: <span id="tradeCount">0</span> / 10</p>
                 <button class="btn btn-success" onclick="topUpMoney()">Top Up ₹1,00,000</button>
             </div>
             <div class="card">
                 <h3>Quick Trade Executor</h3>
-                <p>Test your 9/15 EMA & Volume strategy risk-free!</p>
-                <button class="btn" onclick="executeTrade('BUY')">Execute BUY Order (Nifty/BankNifty)</button>
-                <button class="btn btn-danger" onclick="executeTrade('SELL')" style="margin-top: 10px;">Execute SELL Order</button>
+                <p style="font-size: 13px; color: #aaa;">Test your 9/15 EMA & Volume strategy risk-free!</p>
+                <button class="btn" onclick="executeTrade('BUY')">Execute BUY Order</button>
+                <button class="btn btn-danger" onclick="executeTrade('SELL')">Execute SELL Order</button>
             </div>
             <div class="card">
                 <h3>Active Positions / Log</h3>
-                <div id="tradeLog" style="font-size: 13px; color: #aaa;">No trades placed yet today.</div>
+                <div id="tradeLog" style="font-size: 12px; color: #aaa;">No trades placed yet today.</div>
             </div>
         </div>
     </div>
@@ -155,14 +155,14 @@
     <!-- Tab 3: Scanner & Indicator Settings -->
     <div id="tab-scanner" class="container">
         <div class="paper-trading-panel">
-            <h2>kajla1990 Indicator & Scanner Settings</h2>
+            <h2>kajla1990 Indicator Settings</h2>
             <div class="card">
                 <h3>Custom Strategy Controls</h3>
-                <label><input type="checkbox" checked> Enable 9 & 15 EMA Crossover</label><br><br>
-                <label><input type="checkbox" checked> Show 15-Min Volume Spike Alert</label><br><br>
-                <label><input type="checkbox" checked> Auto Support / Resistance Lines</label><br><br>
-                <label><input type="checkbox" checked> Rejection Candlestick Pattern Detector</label><br><br>
-                <button class="btn" onclick="alert('Settings saved successfully!')">Apply Settings to Chart</button>
+                <label style="font-size: 14px;"><input type="checkbox" checked> Enable 9 & 15 EMA Crossover</label><br><br>
+                <label style="font-size: 14px;"><input type="checkbox" checked> Show 15-Min Volume Spike Alert</label><br><br>
+                <label style="font-size: 14px;"><input type="checkbox" checked> Auto Support / Resistance Lines</label><br><br>
+                <label style="font-size: 14px;"><input type="checkbox" checked> Rejection Candlestick Pattern Detector</label><br><br>
+                <button class="btn" onclick="alert('Settings applied to chart successfully!')">Apply Settings</button>
             </div>
         </div>
     </div>
@@ -210,7 +210,7 @@
         function topUpMoney() {
             balance += 100000;
             updateDisplay();
-            alert("₹1,00,000 added successfully to your Demo Account!");
+            alert("₹1,00,000 added successfully!");
         }
 
         function executeTrade(type) {
@@ -220,17 +220,16 @@
             }
             tradesToday++;
             totalTrades++;
-            let amount = 50000;
             if(type === 'BUY') {
-                balance -= 1000; // Simulated brokerage/margin impact
+                balance -= 1000;
             } else {
-                balance += 1500; // Simulated profit/loss
+                balance += 1500;
             }
             updateDisplay();
             
             let logDiv = document.getElementById('tradeLog');
-            logDiv.innerHTML = `Last Order: ${type} executed at ${new Date().toLocaleTimeString()} | Status: Successful<br>` + logDiv.innerHTML;
-            alert(`${type} Order executed successfully via Paper Trading!`);
+            logDiv.innerHTML = `Order: ${type} at ${new Date().toLocaleTimeString()}<br>` + logDiv.innerHTML;
+            alert(`${type} Order executed via Paper Trading!`);
         }
 
         function updateDisplay() {
