@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Trading Terminal</title>
+    <title>kajla1990 - Pro Trading Terminal</title>
     <style>
         body {
             margin: 0;
@@ -19,11 +19,63 @@
             font-size: 18px;
             font-weight: bold;
             border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        .app-title {
+            color: #2962ff;
+        }
+        .wallet-badge {
+            background: #2a2e39;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #00e676;
+        }
+        .container {
+            height: calc(100vh - 115px);
+            width: 100%;
+            display: none;
+        }
+        .container.active {
+            display: block;
         }
         .tradingview-widget-container {
-            height: calc(100vh - 120px);
+            height: 100%;
             width: 100%;
         }
+        /* Paper Trading Section Style */
+        .paper-trading-panel {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+            background: #121212;
+        }
+        .card {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+        .btn {
+            background: #2962ff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-success { background: #00e676; color: #000; }
+        .btn-danger { background: #ff5252; }
+        
+        /* Bottom Navigation Bar */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -49,37 +101,144 @@
 </head>
 <body>
 
-    <header>🚀 Pro Trading Terminal</header>
+    <header>
+        <span class="app-title">kajla1990 🚀</span>
+        <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
+    </header>
 
-    <!-- TradingView Advanced Real-time Chart Widget BEGIN -->
-    <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-        {
-          "width": "100%",
-          "height": "100%",
-          "symbol": "NSE:RELIANCE",
-          "interval": "15",
-          "timezone": "Asia/Kolkata",
-          "theme": "dark",
-          "style": "1",
-          "locale": "en",
-          "enable_publishing": false,
-          "allow_symbol_change": true,
-          "calendar": false,
-          "support_host": "https://www.tradingview.com"
-        }
-        </script>
+    <!-- Tab 1: Home / Chart Terminal -->
+    <div id="tab-home" class="container active">
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+            {
+              "width": "100%",
+              "height": "100%",
+              "symbol": "NSE:NIFTY",
+              "interval": "15",
+              "timezone": "Asia/Kolkata",
+              "theme": "dark",
+              "style": "1",
+              "locale": "en",
+              "enable_publishing": false,
+              "allow_symbol_change": true,
+              "calendar": true,
+              "support_host": "https://www.tradingview.com"
+            }
+            </script>
+        </div>
     </div>
-    <!-- TradingView Widget END -->
+
+    <!-- Tab 2: Paper Trading Panel -->
+    <div id="tab-paper" class="container">
+        <div class="paper-trading-panel">
+            <h2>Paper Trading Dashboard</h2>
+            <div class="card">
+                <h3>Virtual Account Balance</h3>
+                <p style="font-size: 24px; color: #00e676;" id="balanceText">₹5,00,000.00</p>
+                <p>Daily Trades Used: <span id="tradeCount">0</span> / 10</p>
+                <button class="btn btn-success" onclick="topUpMoney()">Top Up ₹1,00,000</button>
+            </div>
+            <div class="card">
+                <h3>Quick Trade Executor</h3>
+                <p>Test your 9/15 EMA & Volume strategy risk-free!</p>
+                <button class="btn" onclick="executeTrade('BUY')">Execute BUY Order (Nifty/BankNifty)</button>
+                <button class="btn btn-danger" onclick="executeTrade('SELL')" style="margin-top: 10px;">Execute SELL Order</button>
+            </div>
+            <div class="card">
+                <h3>Active Positions / Log</h3>
+                <div id="tradeLog" style="font-size: 13px; color: #aaa;">No trades placed yet today.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Scanner & Indicator Settings -->
+    <div id="tab-scanner" class="container">
+        <div class="paper-trading-panel">
+            <h2>kajla1990 Indicator & Scanner Settings</h2>
+            <div class="card">
+                <h3>Custom Strategy Controls</h3>
+                <label><input type="checkbox" checked> Enable 9 & 15 EMA Crossover</label><br><br>
+                <label><input type="checkbox" checked> Show 15-Min Volume Spike Alert</label><br><br>
+                <label><input type="checkbox" checked> Auto Support / Resistance Lines</label><br><br>
+                <label><input type="checkbox" checked> Rejection Candlestick Pattern Detector</label><br><br>
+                <button class="btn" onclick="alert('Settings saved successfully!')">Apply Settings to Chart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 4: Portfolio -->
+    <div id="tab-portfolio" class="container">
+        <div class="paper-trading-panel">
+            <h2>Portfolio & Accuracy Report</h2>
+            <div class="card">
+                <h3>Overall Performance</h3>
+                <p>Total Trades: <span id="totalTradesCount">0</span></p>
+                <p>Win Rate: <span id="winRate">0%</span></p>
+            </div>
+        </div>
+    </div>
 
     <!-- Bottom Navigation Bar -->
     <div class="bottom-nav">
-        <div class="nav-item active">🏠 Home</div>
-        <div class="nav-item">📈 Watchlist</div>
-        <div class="nav-item">📋 Orders</div>
-        <div class="nav-item">💼 Portfolio</div>
+        <div class="nav-item active" onclick="switchTab(0)">🏠 Home</div>
+        <div class="nav-item" onclick="switchTab(1)">📊 Paper Trade</div>
+        <div class="nav-item" onclick="switchTab(2)">⚡ Scanner</div>
+        <div class="nav-item" onclick="switchTab(3)">💼 Portfolio</div>
     </div>
 
+    <script>
+        let balance = 500000;
+        let tradesToday = 0;
+        let totalTrades = 0;
+
+        function switchTab(index) {
+            const containers = document.querySelectorAll('.container');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            containers.forEach((c, i) => {
+                if(i === index) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+
+            navItems.forEach((n, i) => {
+                if(i === index) n.classList.add('active');
+                else n.classList.remove('active');
+            });
+        }
+
+        function topUpMoney() {
+            balance += 100000;
+            updateDisplay();
+            alert("₹1,00,000 added successfully to your Demo Account!");
+        }
+
+        function executeTrade(type) {
+            if(tradesToday >= 10) {
+                alert("Daily trade limit of 10 trades reached!");
+                return;
+            }
+            tradesToday++;
+            totalTrades++;
+            let amount = 50000;
+            if(type === 'BUY') {
+                balance -= 1000; // Simulated brokerage/margin impact
+            } else {
+                balance += 1500; // Simulated profit/loss
+            }
+            updateDisplay();
+            
+            let logDiv = document.getElementById('tradeLog');
+            logDiv.innerHTML = `Last Order: ${type} executed at ${new Date().toLocaleTimeString()} | Status: Successful<br>` + logDiv.innerHTML;
+            alert(`${type} Order executed successfully via Paper Trading!`);
+        }
+
+        function updateDisplay() {
+            document.getElementById('walletDisplay').innerText = `Demo: ₹${balance.toLocaleString('en-IN')}`;
+            document.getElementById('balanceText').innerText = `₹${balance.toLocaleString('en-IN')}.00`;
+            document.getElementById('tradeCount').innerText = tradesToday;
+            document.getElementById('totalTradesCount').innerText = totalTrades;
+        }
+    </script>
 </body>
 </html>
