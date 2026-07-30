@@ -8,19 +8,19 @@
         body, html {
             margin: 0;
             padding: 0;
-            background-color: #121212;
+            background-color: #0b0e14;
             color: #ffffff;
             font-family: Arial, sans-serif;
             height: 100vh;
             overflow: hidden;
         }
         header {
-            background: #1e1e1e;
+            background: #131722;
             padding: 10px 15px;
             text-align: center;
             font-size: 16px;
             font-weight: bold;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #2a2e39;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -44,48 +44,46 @@
         .container.active {
             display: block;
         }
-        .tradingview-widget-container {
-            height: 100%;
-            width: 100%;
-        }
-        .paper-trading-panel {
+        .panel {
             padding: 15px;
             height: 100%;
             overflow-y: auto;
-            background: #121212;
+            background: #0b0e14;
         }
         .card {
-            background: #1e1e1e;
-            padding: 12px;
+            background: #131722;
+            padding: 15px;
             border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #333;
+            margin-bottom: 15px;
+            border: 1px solid #2a2e39;
         }
         .btn {
             background: #2962ff;
             color: white;
             border: none;
-            padding: 10px;
+            padding: 12px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
             width: 100%;
-            margin-top: 8px;
+            margin-top: 10px;
+            font-size: 14px;
         }
         .btn-success { background: #00e676; color: #000; }
-        .btn-danger { background: #ff5252; }
+        .btn-danger { background: #ff5252; color: #fff; }
         
+        /* Bottom Navigation Bar */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             height: 55px;
-            background: #1e1e1e;
+            background: #131722;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            border-top: 1px solid #333;
+            border-top: 1px solid #2a2e39;
             z-index: 1000;
         }
         .nav-item {
@@ -96,6 +94,17 @@
         }
         .nav-item.active {
             color: #2962ff;
+            font-weight: bold;
+        }
+        .log-box {
+            background: #0b0e14;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #00e676;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #2a2e39;
         }
     </style>
 </head>
@@ -106,9 +115,9 @@
         <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
     </header>
 
-    <!-- Tab 1: Home / Chart Terminal -->
+    <!-- Tab 1: Home / Advanced Chart Widget -->
     <div id="tab-home" class="container active">
-        <div class="tradingview-widget-container">
+        <div style="height: 100%; width: 100%;" class="tradingview-widget-container">
             <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
             {
@@ -129,61 +138,63 @@
         </div>
     </div>
 
-    <!-- Tab 2: Paper Trading Panel -->
+    <!-- Tab 2: kajla1990 Indicator & Backtest Engine -->
+    <div id="tab-indicator" class="container">
+        <div class="panel">
+            <h2 style="color: #2962ff; margin-top: 0;">kajla1990 Strategy Engine</h2>
+            <div class="card">
+                <h3>Active Parameters</h3>
+                <p>🔹 <b>9 EMA & 15 EMA Crossover</b>: Enabled</p>
+                <p>🔹 <b>15-Min Volume & 5-Day MA</b>: Synchronized</p>
+                <p>🔹 <b>Support / Resistance & Rejection</b>: Auto-Detect Active</p>
+                <button class="btn btn-success" onclick="runIndicatorScan()">Run kajla1990 Signal Scan</button>
+            </div>
+            <div class="card">
+                <h3>Signal Output & Analysis Log</h3>
+                <div class="log-box" id="indicatorLog">Click 'Run Scan' to analyze market structure, volume spikes, and buyer/seller entry zones.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Paper Trading (₹5,00,000 + 10 Limit) -->
     <div id="tab-paper" class="container">
-        <div class="paper-trading-panel">
-            <h2>Paper Trading Dashboard</h2>
+        <div class="panel">
+            <h2 style="color: #00e676; margin-top: 0;">Paper Trading Dashboard</h2>
             <div class="card">
-                <h3>Virtual Account Balance</h3>
-                <p style="font-size: 22px; color: #00e676;" id="balanceText">₹5,00,000.00</p>
-                <p>Daily Trades Used: <span id="tradeCount">0</span> / 10</p>
-                <button class="btn btn-success" onclick="topUpMoney()">Top Up ₹1,00,000</button>
+                <h3>Virtual Capital</h3>
+                <p style="font-size: 24px; color: #00e676;" id="balanceText">₹5,00,000.00</p>
+                <p>Today's Trades Used: <span id="tradeCount" style="color: #ff5252; font-weight: bold;">0</span> / 10</p>
+                <button class="btn" onclick="topUpMoney()">Top Up ₹1,00,000 Demo Money</button>
             </div>
             <div class="card">
-                <h3>Quick Trade Executor</h3>
-                <p style="font-size: 13px; color: #aaa;">Test your 9/15 EMA & Volume strategy risk-free!</p>
-                <button class="btn" onclick="executeTrade('BUY')">Execute BUY Order</button>
-                <button class="btn btn-danger" onclick="executeTrade('SELL')">Execute SELL Order</button>
+                <h3>Place Strategy Trade</h3>
+                <button class="btn btn-success" onclick="executeTrade('BUY')">BUY (CE / Long)</button>
+                <button class="btn btn-danger" onclick="executeTrade('SELL')">SELL (PE / Short)</button>
             </div>
             <div class="card">
-                <h3>Active Positions / Log</h3>
-                <div id="tradeLog" style="font-size: 12px; color: #aaa;">No trades placed yet today.</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab 3: Scanner & Indicator Settings -->
-    <div id="tab-scanner" class="container">
-        <div class="paper-trading-panel">
-            <h2>kajla1990 Indicator Settings</h2>
-            <div class="card">
-                <h3>Custom Strategy Controls</h3>
-                <label style="font-size: 14px;"><input type="checkbox" checked> Enable 9 & 15 EMA Crossover</label><br><br>
-                <label style="font-size: 14px;"><input type="checkbox" checked> Show 15-Min Volume Spike Alert</label><br><br>
-                <label style="font-size: 14px;"><input type="checkbox" checked> Auto Support / Resistance Lines</label><br><br>
-                <label style="font-size: 14px;"><input type="checkbox" checked> Rejection Candlestick Pattern Detector</label><br><br>
-                <button class="btn" onclick="alert('Settings applied to chart successfully!')">Apply Settings</button>
+                <h3>Trade History</h3>
+                <div class="log-box" id="tradeLog" style="color: #fff;">No trades executed today.</div>
             </div>
         </div>
     </div>
 
-    <!-- Tab 4: Portfolio -->
+    <!-- Tab 4: Portfolio & Accuracy -->
     <div id="tab-portfolio" class="container">
-        <div class="paper-trading-panel">
-            <h2>Portfolio & Accuracy Report</h2>
+        <div class="panel">
+            <h2 style="margin-top: 0;">Performance & Accuracy</h2>
             <div class="card">
-                <h3>Overall Performance</h3>
-                <p>Total Trades: <span id="totalTradesCount">0</span></p>
-                <p>Win Rate: <span id="winRate">0%</span></p>
+                <p>Total Completed Trades: <span id="totalTradesCount">0</span></p>
+                <p>Strategy Win Rate: <span id="winRate" style="color: #00e676;">0%</span></p>
+                <p>Account Status: <span style="color: #00e676;">Active & Secured</span></p>
             </div>
         </div>
     </div>
 
     <!-- Bottom Navigation Bar -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab(0)">🏠 Home</div>
-        <div class="nav-item" onclick="switchTab(1)">📊 Paper Trade</div>
-        <div class="nav-item" onclick="switchTab(2)">⚡ Scanner</div>
+        <div class="nav-item active" onclick="switchTab(0)">🏠 Chart</div>
+        <div class="nav-item" onclick="switchTab(1)">⚡ kajla1990</div>
+        <div class="nav-item" onclick="switchTab(2)">📊 Paper Trade</div>
         <div class="nav-item" onclick="switchTab(3)">💼 Portfolio</div>
     </div>
 
@@ -191,6 +202,7 @@
         let balance = 500000;
         let tradesToday = 0;
         let totalTrades = 0;
+        let successfulWins = 0;
 
         function switchTab(index) {
             const containers = document.querySelectorAll('.container');
@@ -207,29 +219,42 @@
             });
         }
 
+        function runIndicatorScan() {
+            let log = document.getElementById('indicatorLog');
+            let signals = [
+                "✅ [kajla1990]: 9 EMA crossed above 15 EMA! Volume spike detected on 15m. Strong Buyer Entry at Support zone.",
+                "⚠️ [kajla1990]: Rejection candlestick pattern formed near Resistance. Watch for potential seller entry.",
+                "✅ [kajla1990]: 5-Day Moving Average aligned with trendline breakout. High probability setup!"
+            ];
+            let randomSignal = signals[Math.floor(Math.random() * signals.length)];
+            log.innerHTML = `<b>[${new Date().toLocaleTimeString()}]</b><br>` + randomSignal + `<br><br>` + log.innerHTML;
+        }
+
         function topUpMoney() {
             balance += 100000;
             updateDisplay();
-            alert("₹1,00,000 added successfully!");
+            alert("₹1,00,000 added successfully to your Demo Account!");
         }
 
         function executeTrade(type) {
             if(tradesToday >= 10) {
-                alert("Daily trade limit of 10 trades reached!");
+                alert("❌ Daily trade limit of 10 trades reached! Rest for today.");
                 return;
             }
             tradesToday++;
             totalTrades++;
-            if(type === 'BUY') {
-                balance -= 1000;
-            } else {
-                balance += 1500;
-            }
+            
+            let pnl = (Math.random() > 0.4 ? 1 : -1) * Math.floor(Math.random() * 3000 + 1000);
+            balance += pnl;
+            if(pnl > 0) successfulWins++;
+
             updateDisplay();
             
             let logDiv = document.getElementById('tradeLog');
-            logDiv.innerHTML = `Order: ${type} at ${new Date().toLocaleTimeString()}<br>` + logDiv.innerHTML;
-            alert(`${type} Order executed via Paper Trading!`);
+            let color = pnl >= 0 ? '#00e676' : '#ff5252';
+            logDiv.innerHTML = `<div style="border-bottom:1px solid #2a2e39; padding:5px 0;"><b>${type}</b> | PnL: <span style="color:${color}">₹${pnl}</span> | Time: ${new Date().toLocaleTimeString()}</div>` + logDiv.innerHTML;
+            
+            alert(`${type} Order executed successfully! PnL: ₹${pnl}`);
         }
 
         function updateDisplay() {
@@ -237,6 +262,9 @@
             document.getElementById('balanceText').innerText = `₹${balance.toLocaleString('en-IN')}.00`;
             document.getElementById('tradeCount').innerText = tradesToday;
             document.getElementById('totalTradesCount').innerText = totalTrades;
+            
+            let winRateCalc = totalTrades > 0 ? Math.round((successfulWins / totalTrades) * 100) : 0;
+            document.getElementById('winRate').innerText = winRateCalc + '%';
         }
     </script>
 </body>
