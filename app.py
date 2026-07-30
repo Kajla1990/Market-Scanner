@@ -51,7 +51,6 @@ def detect_signals_and_patterns(df):
         prev = df.iloc[i-1]
         
         # Conditions check
-        ema_channel = (curr['Close'] >= min(curr['EMA_9'], curr['EMA_15'])) and (curr['Close'] <= max(curr['EMA_9'], curr['EMA_15']))
         vol_spike = curr['Volume'] > (1.5 * curr['Vol_Avg_15'])
         near_support = abs(curr['Close'] - curr['Support_5D']) / curr['Support_5D'] < 0.005
         near_resistance = abs(curr['Close'] - curr['Resistance_5D']) / curr['Resistance_5D'] < 0.005
@@ -59,7 +58,7 @@ def detect_signals_and_patterns(df):
         pattern_text = "Normal Price Action"
         signal_type = "HOLD"
         
-        # Candlestick Rejection Logic (Hammer / Shooting Star simulation)
+        # Candlestick Rejection Logic
         body = abs(curr['Close'] - curr['Open'])
         range_val = curr['High'] - curr['Low']
         
@@ -104,15 +103,14 @@ timeframe = st.sidebar.selectbox("Select Timeframe", ["1d", "1h", "15m", "5m"])
 
 st.sidebar.markdown("---")
 st.sidebar.header("⚡ Custom Indicator Settings")
-show_indicator = st.sidebar.checkbox("Apply Advanced Custom Indicator", value=True)
+show_indicator = st.sidebar.checkbox("Apply Advanced Custom Indicator (9/15 EMA & MA)", value=True)
 show_support_resistance = st.sidebar.checkbox("Show Auto 5-Day Support/Resistance", value=True)
-price_alert_val = st.sidebar.number_input("Set Price Alert Target (INR/USD)", value=0.0)
+price_alert_val = st.sidebar.number_input("Set Price Alert Target", value=0.0)
 
 # --- 5. MAIN INTERFACE ---
 st.title("🚀 Advanced Multi-Asset Ultra Trading Terminal")
-st.markdown("Powered by 9/15 EMA, 5D MA, Volume Analyzer, Rejection Patterns, RSI, Paper Trading & Replay Facility.")
+st.markdown("Equipped with EMA Matrix, Volume Analyzer, Rejection Patterns, Risk Management & Paper Trading.")
 
-# Fetching Data Safely with Error Handling & Anti-Hang Protection
 @st.cache_data(ttl=300)
 def load_data(ticker, period_tf):
     try:
@@ -123,12 +121,12 @@ def load_data(ticker, period_tf):
     except Exception as e:
         return None
 
-data_load_state = st.text("Loading market data...")
+data_load_state = st.text("Loading market data safely...")
 df = load_data(ticker_symbol, timeframe)
 data_load_state.text("")
 
 if df is None or df.empty:
-    st.error("Error: Could not fetch data. Please check the ticker symbol or network connection (Safety Protection Triggered).")
+    st.error("Error: Could not fetch data. Please check the ticker symbol or network connection.")
 else:
     df = calculate_indicators(df)
     
@@ -136,7 +134,7 @@ else:
     if price_alert_val > 0:
         latest_cp = df['Close'].iloc[-1]
         if latest_cp >= price_alert_val:
-            st.warning(f"🚨 PRICE ALERT TRIGGERED! Current Price {latest_cp} has reached or crossed target {price_alert_val}")
+            st.warning(f"🚨 PRICE ALERT TRIGGERED! Current Price {latest_cp} has reached target {price_alert_val}")
 
     # --- 6. METRICS & LIVE MARKET OVERVIEW ---
     latest_price = float(df['Close'].iloc[-1])
@@ -150,18 +148,50 @@ else:
     col3.metric("Volume Change vs 15MA", f"{df['Vol_Change_Pct'].iloc[-1]:+.1f}%")
     col4.metric("Demo Account Balance", f"₹{st.session_state.balance:,.2f}")
 
+    # --- NEW ADVANCED FEATURE 1: MULTI-TIMEFRAME TREND DASHBOARD ---
+    st.subheader("🌐 Multi-Timeframe Trend Strength Matrix")
+    m_col1, m_col2, m_col3 = st.columns(3)
+    ema9_val = df['EMA_9'].iloc[-1]
+    ema15_val = df['EMA_15'].iloc[-1]
+    trend_status = "BULLISH 🚀" if ema9_val > ema15_val else "BEARISH 🔻"
+    
+    m_col1.metric("Short-Term Trend (EMA 9/15)", trend_status)
+    m_col2.metric("Volume Strength", "High Spike" if df['Vol_Change_Pct'].iloc[-1] > 20 else "Normal")
+    m_col3.metric("Market Phase", "Breakout Zone" if abs(latest_price - df['Resistance_5D'].iloc[-1]) < (latest_price*0.005) else "Consolidation")
+
     # --- 7. ADVANCED CHART & INDICATOR VISUALIZATION ---
     st.subheader(f"📊 Chart Analysis & Custom Indicator for {ticker_symbol}")
     
     if show_indicator:
         chart_data = df[['Close', 'EMA_9', 'EMA_15', 'MA_5D']]
         st.line_chart(chart_data)
-        st.caption("Indicator Layers Active: 9 EMA (Blue-ish), 15 EMA (Orange), 5D Moving Average (Green), embedded with RSI & Volume Matrix.")
+        st.caption("Indicator Layers: 9 EMA, 15 EMA, 5D Moving Average active.")
     else:
         st.line_chart(df['Close'])
 
     if show_support_resistance:
         st.info(f" automático 5-Day Support: ₹{df['Support_5D'].iloc[-1]:.2f} | Resistance: ₹{df['Resistance_5D'].iloc[-1]:.2f}")
+
+    # --- NEW ADVANCED FEATURE 2: AUTO RISK MANAGEMENT & STOP-LOSS CALCULATOR ---
+    st.subheader("🛡️ Smart Risk Management & Stop-Loss Calculator")
+    rc1, rc2, rc3 = st.columns(3)
+    with rc1:
+        trade_side = st.selectbox("Trade Bias", ["LONG / BUY", "SHORT / SELL"])
+    with rc2:
+        risk_reward = st.selectbox("Risk-to-Reward Ratio", ["1:1.5", "1:2", "1:3"])
+    
+    # Auto calculation
+    if trade_side == "LONG / BUY":
+        suggested_sl = df['Support_5D'].iloc[-1]
+        risk_amt = latest_price - suggested_sl
+        target_amt = latest_price + (risk_amt * float(risk_reward.split(":")[1]))
+    else:
+        suggested_sl = df['Resistance_5D'].iloc[-1]
+        risk_amt = suggested_sl - latest_price
+        target_amt = latest_price - (risk_amt * float(risk_reward.split(":")[1]))
+        
+    rc3.metric("Suggested Stop-Loss", f"₹{suggested_sl:.2f}")
+    st.write(f"💡 **Calculated Optimal Target based on {risk_reward}:** ₹{target_amt:.2f} (Risk Amount: ₹{abs(risk_amt):.2f})")
 
     # --- 8. SIGNAL SCANNER & PATTERN TEXT LOGS ---
     st.subheader("🔍 Pattern Rejection & Fast Trade Signals Log")
@@ -217,3 +247,6 @@ else:
     if st.session_state.trades:
         st.write(f"**Active/Executed Trades History Today (Limit: {st.session_state.trade_count_today}/10):**")
         st.table(pd.DataFrame(st.session_state.trades))
+            
+        
+        
