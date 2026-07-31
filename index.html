@@ -21,12 +21,12 @@
         .container { height: calc(100vh - 87px); width: 100%; display: none; box-sizing: border-box; }
         .container.active { display: block; }
         
-        .panel { padding: 12px; height: 100%; overflow-y: auto; background: #121212; box-sizing: border-box; }
-        .card { background: #1e1e1e; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
-        .btn { background: #2962ff; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; font-size: 14px; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box;}
+        .panel { padding: 16px; height: 100%; overflow-y: auto; background: #121212; box-sizing: border-box; text-align: center; }
+        .card { background: #1e1e1e; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #333; text-align: left; }
+        .btn { background: #2962ff; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; font-size: 15px; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box;}
         .btn-success { background: #00e676; color: #000; }
         .btn-danger { background: #ff5252; color: #fff; }
-        .log-box { background: #0b0e14; padding: 8px; border-radius: 6px; font-size: 12px; color: #00e676; max-height: 140px; overflow-y: auto; border: 1px solid #333; }
+        .log-box { background: #0b0e14; padding: 8px; border-radius: 6px; font-size: 12px; color: #00e676; max-height: 140px; overflow-y: auto; border: 1px solid #333; text-align: left; }
         
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 55px;
@@ -44,32 +44,27 @@
         <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
     </header>
 
-    <!-- Tab 1: TradingView Advanced Chart Widget (Error-Free Official Integration) -->
+    <!-- Tab 1: Direct Chart Launcher (Guaranteed Error-Free Solution) -->
     <div id="tab-home" class="container active">
-        <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-            {
-                "autosize": true,
-                "symbol": "NSE:NIFTY",
-                "interval": "15",
-                "timezone": "Asia/Kolkata",
-                "theme": "dark",
-                "style": "1",
-                "locale": "in",
-                "enable_publishing": false,
-                "hide_top_toolbar": false,
-                "allow_symbol_change": true,
-                "calendar": false,
-                "support_host": "https://www.tradingview.com"
-            }
-            </script>
+        <div class="panel">
+            <h2 style="color: #2962ff; margin-top: 10px;">Live Nifty / BankNifty Terminal</h2>
+            <p style="color: #aaa; font-size: 13px;">मोबाइल ब्राउज़र रिस्ट्रिक्शन से बचने के लिए नीचे दिए गए बटन से डायरेक्ट लाइव चार्ट खोलें:</p>
+            
+            <div class="card" style="text-align: center; margin-top: 20px;">
+                <a href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" class="btn">🚀 Open Nifty 50 Chart (TradingView)</a>
+                <a href="https://in.tradingview.com/chart/?symbol=NSE%3ABANKNIFTY" target="_blank" class="btn" style="background: #00838f;">🚀 Open BankNifty Chart</a>
+            </div>
+
+            <div class="card">
+                <b>Quick Market View:</b>
+                <p style="font-size: 13px; color: #ccc;">यहाँ से आप सीधे ऑफिशियल चार्ट पर जाकर अपने 9/15 EMA और वॉल्यूम सेटअप को ट्रैक कर सकते हैं।</p>
+            </div>
         </div>
     </div>
 
     <!-- Tab 2: kajla1990 Custom Strategy Engine -->
     <div id="tab-indicator" class="container">
-        <div class="panel">
+        <div class="panel" style="text-align: left;">
             <h3 style="color:#2962ff; margin-top:0;">kajla1990 Strategy Engine</h3>
             <div class="card">
                 <b>Active Rules:</b> 9/15 EMA Crossover + 15m Volume + S/R
@@ -84,7 +79,7 @@
 
     <!-- Tab 3: Paper Trading -->
     <div id="tab-paper" class="container">
-        <div class="panel">
+        <div class="panel" style="text-align: left;">
             <h3 style="color:#00e676; margin-top:0;">Option Paper Trading</h3>
             <div class="card">
                 <p style="font-size:18px; margin:5px 0; color:#00e676;" id="balanceText">₹5,00,000.00</p>
@@ -101,7 +96,7 @@
 
     <!-- Tab 4: Portfolio -->
     <div id="tab-portfolio" class="container">
-        <div class="panel">
+        <div class="panel" style="text-align: left;">
             <h3 style="margin-top:0;">Performance & Stats</h3>
             <div class="card">
                 <p>Total Trades: <span id="totalTradesCount">0</span></p>
