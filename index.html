@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kajla Terminal Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js?v=2"></script>
 <style>
   body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
 .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
 .watchlist{display:flex;gap:10px;padding:10px;overflow-x:auto;background:#0b0e14}
-.watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 15px;border-radius:5px}
+.watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 15px;border-radius:5px;font-weight:bold}
 .watchlist button.active{background:#2563eb;border-color:#2563eb}
   #chart{width:100%; height:380px;background:#0b0e14}
 .card{background:#161a22;margin:10px;padding:12px;border-radius:8px}
@@ -41,102 +41,4 @@
 
 <div class="card">
   <h3>📊 My Holdings</h3>
-  <table id="holdingsTable"><tr><th>Stock</th><th>Qty</th><th>Avg</th><th>P&L</th></tr></table>
-</div>
-
-<div id="orders" class="card"></div>
-
-<script>
-let candleData = [];
-let balance = 498000;
-let holdings = {};
-let orderHistory = [];
-let currentStock = 'NIFTY';
-let chart, candleSeries, volumeSeries, ema9Series, ema15Series;
-
-// Load data safely
-try{
-  balance = parseFloat(localStorage.getItem('balance')) || 498000;
-  holdings = JSON.parse(localStorage.getItem('holdings')) || {};
-  orderHistory = JSON.parse(localStorage.getItem('orders')) || [];
-} catch(e){}
-
-function calculateEMA(data, period) {
-    const k = 2 / (period + 1); let ema = data[0]; let emaArray = [];
-    for (let i = 0; i < data.length; i++) {
-        ema = data[i] * k + ema * (1 - k);
-        if(i >= period - 1) emaArray.push(ema);
-    }
-    return emaArray;
-}
-
-function placeOrder(type){
-  if(candleData.length === 0) return;
-  const price = candleData[candleData.length-1].close;
-  const qty = 50;
-  const cost = price * qty;
-  
-  if(type === 'BUY' && balance < cost){ alert("Balance कम है"); return; }
-  
-  if(!holdings[currentStock]) holdings[currentStock] = {qty:0, avg:0};
-  
-  if(type === 'BUY'){
-    const totalCost = holdings[currentStock].avg * holdings[currentStock].qty + cost;
-    holdings[currentStock].qty += qty;
-    holdings[currentStock].avg = totalCost / holdings[currentStock].qty;
-    balance -= cost;
-  } else {
-    if(holdings[currentStock].qty < qty){ alert("Itne shares नहीं हैं"); return; }
-    holdings[currentStock].qty -= qty;
-    balance += cost;
-  }
-  
-  localStorage.setItem('balance', balance);
-  localStorage.setItem('holdings', JSON.stringify(holdings));
-  orderHistory.push({stock:currentStock, type, price:price.toFixed(2), qty, time: new Date().toLocaleTimeString()});
-  localStorage.setItem('orders', JSON.stringify(orderHistory));
-  
-  alert(`${currentStock} ${type} ${qty} @ ${price.toFixed(2)}`);
-  updateUI();
-}
-
-function updateUI(){
-  document.getElementById('balance').innerText = `Demo: ₹${balance.toLocaleString()}`;
-  
-  let htm = `<tr><th>Stock</th><th>Qty</th><th>Avg</th><th>P&L</th></tr>`;
-  for(let stock in holdings){
-    if(holdings[stock].qty > 0 && candleData.length > 0){
-      const ltp = candleData[candleData.length-1].close;
-      const pnl = (ltp - holdings[stock].avg) * holdings[stock].qty;
-      htm += `<tr><td>${stock}</td><td>${holdings[stock].qty}</td><td>${holdings[stock].avg.toFixed(2)}</td>
-      <td class="${pnl>0?'profit':'loss'}">₹${pnl.toFixed(0)}</td></tr>`
-    }
-  }
-  document.getElementById('holdingsTable').innerHTML = htm;
-  
-  if(orderHistory.length > 0){
-    let html = `<h3>📒 Order History</h3><table><tr><th>Stock</th><th>Type</th><th>Qty</th><th>Price</th><th>Time</th></tr>`;
-    orderHistory.slice(-5).forEach(o=>{
-      html += `<tr><td>${o.stock}</td><td style="color:${o.type=='BUY'?'#22c55e':'#ef4444'}">${o.type}</td>
-      <td>${o.qty}</td><td>${o.price}</td><td>${o.time}</td></tr>`
-    });
-    html += `</table>`;
-    document.getElementById('orders').innerHTML = html;
-  }
-}
-
-function changeStock(symbol, btn){
-  document.querySelectorAll('.watchlist button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  currentStock = symbol;
-  candleData = [];
-  initChart();
-}
-
-function initChart() {
-  try{
-    document.getElementById('chart').innerHTML = '';
-    chart = LightweightCharts.createChart(document.getElementById('chart'), {layout: { background: { color: '#0b0e14' }, textColor: '#DDD' }});
-    candleSeries = chart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444' });
-    volumeSeries = chart.addHistogramSeries({ priceScaleId: 'volume' });
-    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8,
+  <table id="holdingsTable"><tr><th>Stock</th><th>Qty</th><th>Avg</th><th>P&
