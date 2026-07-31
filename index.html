@@ -1,3 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kajla Signal Pro v5.1</title>
+</head>
+<body>
+    <h2>Kajla Signal Pro v5.1 - 88% Sniper</h2>
+    <pre id="output"></pre>
+
+<script>
+// NOTE: Ye Python code hai. Isko chalane ke liye Python + yfinance + pandas_ta chahiye
+// Browser me direct nahi chalega. Isko.py file bana ke chalana padega
+
+const pythonCode = `
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
@@ -5,10 +19,12 @@ from datetime import datetime, time
 
 # ========== SETTINGS ==========
 SYMBOL = "^NSEI" # NIFTY. BANKNIFTY = "^NSEBANK", SENSEX = "^BSESN"
-TIMEFRAME = "5m" # 5m या 15m
+TIMEFRAME = "5m" # 5m ya 15m
 START_DATE = "2024-08-01"
 END_DATE = "2025-07-31"
-LOT_SIZE = 50 # NIFTY
+
+# News wale din - in din trade nahi leni
+NEWS_DATES = ['2025-02-05', '2025-05-23', '2025-06-19'] # RBI/Fed dates
 
 # ========== DATA DOWNLOAD ==========
 print("Data download ho raha hai...")
@@ -19,17 +35,26 @@ data = data.dropna()
 data['EMA21'] = ta.ema(data['Close'], 21)
 data['EMA50'] = ta.ema(data['Close'], 50)
 data['RSI'] = ta.rsi(data['Close'], 14)
+
 adx = ta.adx(data['High'], data['Low'], data['Close'], 14)
 data['ADX'] = adx['ADX_14']
+
 data['ATR'] = ta.atr(data['High'], data['Low'], data['Close'], 14)
 data['VOL_MA'] = ta.sma(data['Volume'], 20)
-data['HTF_EMA'] = data['Close'].resample('1H').ohlc()['close'].ewm(50).mean().ffill() # 1 Hour EMA
+
+# 1 Hour EMA for HTF
+htf = data['Close'].resample('1H').ohlc()['close']
+data['HTF_EMA'] = htf.ewm(50).mean().ffill()
 
 # Support Resistance
 data['RES'] = data['High'].rolling(20).max()
 data['SUP'] = data['Low'].rolling(20).min()
 
-# ========== 11 FILTERS ==========
+# MA Cross
+data['MA9'] = ta.sma(data['Close'], 9)
+data['MA21'] = ta.sma(data['Close'], 21)
+
+# ========== SIGNAL FUNCTION ==========
 def get_signals(df):
     signals = []
     for i in range(50, len(df)):
@@ -37,44 +62,30 @@ def get_signals(df):
         prev1 = df.iloc[i-1]
         prev2 = df.iloc[i-2]
 
-        # Time Filter 9:30 to 2:30
+        # 1. Time Filter 9:30 to 2:30
         t = row.name.time()
         if not (time(9,30) <= t <= time(14,30)):
             continue
 
-        # Expiry Lock - Thursday after 1:30
+        # 2. Expiry Lock - Thursday after 1:30
         if row.name.weekday() == 3 and t >= time(13,30): # 3 = Thursday
             continue
 
-        # News Filter - Manual list add karni padegi
-        news_dates = ['2025-02-05', '2025-05-23', '2025-06-19'] # RBI/Fed dates
-        if str(row.name.date()) in news_dates:
+        # 3. News Filter
+        if str(row.name.date()) in NEWS_DATES:
             continue
 
-        # 11 Points
-        f1 = row['EMA21'] > row['EMA50']
-        f2 = row['RSI'] > 50
-        f3 = row['ADX'] > 25 and row['ADX'] > prev1['ADX'] and prev1['ADX'] > prev2['ADX'] # 3 Candle
-        f4 = row['Close'] > row['HTF_EMA']
-        f5 = row['Volume'] > row['VOL_MA']
-        f6 = row['Close'] > row['RES']
+        # ========== 11 POINTS ==========
+        f1 = row['EMA21'] > row['EMA50'] # Trend
+        f2 = row['RSI'] > 50 # Momentum
+        f3 = row['ADX'] > 25 and row['ADX'] > prev1['ADX'] and prev1['ADX'] > prev2['ADX'] # ADX 3 Candle
+        f4 = row['Close'] > row['HTF_EMA'] # HTF Confirm
+        f5 = row['Volume'] > row['VOL_MA'] # Volume
+        f6 = row['Close'] > row['RES'] # Breakout
         f7 = row['Close'] > row['Open'] and prev1['Close'] < prev1['Open'] # Bull Engulf
-        f8 = row['Close'] > row['SUP']
-        f9 = row['RSI'] > 50
-        f10 = row['Close'] > row['Open']
-        f11 = ta.sma(df['Close'].iloc[i-9:i], 9).iloc[-1] > ta.sma(df['Close'].iloc[i-21:i], 21).iloc[-1]
+        f8 = row['Close'] > row['SUP'] # Price Action
+        f9 = row['RSI'] > 50 # RSI Confirm
+        f10 = row['Close'] > row['Open'] # Green Candle
+        f11 = row['MA9'] > row['MA21'] # MA Cross
 
-        confluence = sum([f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11])
-
-        if confluence >= 9: # 9/11 Confluence
-            sl = row['Close'] - row['ATR'] * 1.5
-            tp1 = row['Close'] + row['ATR'] * 1.0
-            tp2 = row['Close'] + row['ATR'] * 2.0
-            tp3 = row['Close'] + row['ATR'] * 3.0
-            signals.append([row.name, 'BUY', row['Close'], sl, tp1, tp2, tp3])
-
-    return pd.DataFrame(signals, columns=['Time','Signal','Entry','SL','TP1','TP2','TP3'])
-
-trades = get_signals(data)
-print(f"\nTotal Signals: {len(trades)}")
-print(trades.head())
+        confluence = f1 +
