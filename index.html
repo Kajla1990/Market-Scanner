@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kajla Terminal Pro</title>
-<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<!-- CDN बदला -->
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
   body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
- .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
+.header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
   #chart{width:100%; height:400px}
- .card{background:#161a22;margin:10px;padding:12px;border-radius:8px}
- .btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
- .btn-sell{background:#ef4444;border:none;padding:10px 25px;border-radius:5px;color:#fff;font-weight:bold;margin:5px}
+.card{background:#161a22;margin:10px;padding:12px;border-radius:8px}
+.btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
+.btn-sell{background:#ef4444;border:none;padding:10px 25px;border-radius:5px;color:#fff;font-weight:bold;margin:5px}
   table{width:100%;border-collapse:collapse} td,th{padding:6px;text-align:left}
 </style>
 </head>
@@ -72,6 +73,7 @@ function showOrders(){
 let candleSeries, volumeSeries, ema9Series, ema15Series, chart;
 
 function initChart() {
+  try {
     chart = LightweightCharts.createChart(document.getElementById('chart'), {
         layout: { background: { color: '#0b0e14' }, textColor: '#DDD' }
     });
@@ -92,6 +94,9 @@ function initChart() {
     }
     updateChart();
     showOrders();
+  } catch(e) {
+    alert("Chart Error: " + e.message + ". Page Refresh करो");
+  }
 }
 
 function updateChart(){
@@ -108,4 +113,22 @@ function updateChart(){
       document.getElementById('signal').style.color = "#22c55e";
     } else {
       document.getElementById('signal').innerText = "SELL SIGNAL";
-      document
+      document.getElementById('signal').style.color = "#ef4444";
+    }
+    chart.timeScale().fitContent();
+}
+
+setInterval(() => {
+  if(candleData.length > 0){
+    const last = candleData[candleData.length-1];
+    const newPrice = last.close + (Math.random() - 0.5) * 10;
+    candleData.push({time: last.time + 15*60, open: last.close, high: newPrice+10, low: newPrice-10, close: newPrice, volume: Math.random() * 50000})
+    if(candleData.length > 150) candleData.shift();
+    updateChart();
+  }
+}, 5000);
+
+window.onload = initChart;
+</script>
+</body>
+</html>
