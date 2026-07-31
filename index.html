@@ -1,63 +1,80 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-<meta charset="UTF-8">
-<title>Kajla Signal Pro v4.1 - FIXED</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
-<style>
-body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
-.header{padding:10px;background:#161a22;text-align:center;font-size:16px;font-weight:bold;color:#22c55e}
-#chart{width:100%; height:55vh}
-#signalTable{width:95%;margin:10px auto;border-collapse:collapse;background:#161a22}
-#signalTable td{padding:8px;border:1px solid #334155;font-size:14px}
-.label{color:#94a3b8;width:55%}
-.value{font-weight:bold}
-</style>
-</head>
-<body>
-<div class="header">Kajla Signal Pro v4.1 - NIFTY 5 MIN</div>
-<div id="chart"></div>
+import yfinance as yf
+import pandas as pd
+import pandas_ta as ta
+from datetime import datetime, time
 
-<table id="signalTable">
-<tr><td class="label">Final Signal</td><td class="value" id="signal" style="color:#f59e0b">WAIT</td></tr>
-<tr><td class="label">HTF 15min Trend</td><td class="value" id="htf">-</td></tr>
-<tr><td class="label">ADX Trend Strength</td><td class="value" id="adx">-</td></tr>
-<tr><td class="label">Strike Ke Paas Spot</td><td class="value" id="strike">-</td></tr>
-<tr><td class="label">Buy Price</td><td class="value" id="buy">-</td></tr>
-<tr><td class="label">T1 +20 | T2 +40 | T3 +60</td><td class="value" id="target">-</td></tr>
-<tr><td class="label">SL - Last Swing</td><td class="value" id="sl">-</td></tr>
-<tr><td class="label">1 Year Backtest Success</td><td class="value" id="success">75.4%</td></tr>
-</table>
+# ========== SETTINGS ==========
+SYMBOL = "^NSEI" # NIFTY. BANKNIFTY = "^NSEBANK", SENSEX = "^BSESN"
+TIMEFRAME = "5m" # 5m या 15m
+START_DATE = "2024-08-01"
+END_DATE = "2025-07-31"
+LOT_SIZE = 50 # NIFTY
 
-<script>
-try{
-const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-    layout: { background: { color: '#0b0e14' }, textColor: '#9ca3af' },
-    width: window.innerWidth, height: window.innerHeight*0.55
-});
-const candles = chart.addCandlestickSeries();
-const ema9 = chart.addLineSeries({color:'#facc15',lineWidth:2});
-const ema21 = chart.addLineSeries({color:'#38bdf8',lineWidth:2});
+# ========== DATA DOWNLOAD ==========
+print("Data download ho raha hai...")
+data = yf.download(SYMBOL, start=START_DATE, end=END_DATE, interval=TIMEFRAME)
+data = data.dropna()
 
-// Demo Data - अभी के लिए
-let data=[]; let price=22450;
-for(let i=0;i<100;i++){
-    price += (Math.random()-0.5)*15;
-    data.push({time:1700000+i*300,open:price,high:price+10,low:price-10,close:price+(Math.random()-0.5)*8,volume:120000})
-}
-candles.setData(data);
+# ========== INDICATORS ==========
+data['EMA21'] = ta.ema(data['Close'], 21)
+data['EMA50'] = ta.ema(data['Close'], 50)
+data['RSI'] = ta.rsi(data['Close'], 14)
+adx = ta.adx(data['High'], data['Low'], data['Close'], 14)
+data['ADX'] = adx['ADX_14']
+data['ATR'] = ta.atr(data['High'], data['Low'], data['Close'], 14)
+data['VOL_MA'] = ta.sma(data['Volume'], 20)
+data['HTF_EMA'] = data['Close'].resample('1H').ohlc()['close'].ewm(50).mean().ffill() # 1 Hour EMA
 
-let e9=calcEMA(data,9), e21=calcEMA(data,21);
-ema9.setData(data.map((d,i)=>({time:d.time,value:e9[i]})));
-ema21.setData(data.map((d,i)=>({time:d.time,value:e21[i]})));
-chart.timeScale().fitContent();
+# Support Resistance
+data['RES'] = data['High'].rolling(20).max()
+data['SUP'] = data['Low'].rolling(20).min()
 
-function calcEMA(d,p){let k=2/(p+1),e=[d[0].close];for(let i=1;i<d.length;i++)e.push(d[i].close*k+e[i-1]*(1-k));return e}
+# ========== 11 FILTERS ==========
+def get_signals(df):
+    signals = []
+    for i in range(50, len(df)):
+        row = df.iloc[i]
+        prev1 = df.iloc[i-1]
+        prev2 = df.iloc[i-2]
 
-}catch(e){
-    document.getElementById('signal').innerText="CHART ERROR";
-    document.getElementById('signal').style.color="red";
-}
-</script>
-</body>
-</html>
+        # Time Filter 9:30 to 2:30
+        t = row.name.time()
+        if not (time(9,30) <= t <= time(14,30)):
+            continue
+
+        # Expiry Lock - Thursday after 1:30
+        if row.name.weekday() == 3 and t >= time(13,30): # 3 = Thursday
+            continue
+
+        # News Filter - Manual list add karni padegi
+        news_dates = ['2025-02-05', '2025-05-23', '2025-06-19'] # RBI/Fed dates
+        if str(row.name.date()) in news_dates:
+            continue
+
+        # 11 Points
+        f1 = row['EMA21'] > row['EMA50']
+        f2 = row['RSI'] > 50
+        f3 = row['ADX'] > 25 and row['ADX'] > prev1['ADX'] and prev1['ADX'] > prev2['ADX'] # 3 Candle
+        f4 = row['Close'] > row['HTF_EMA']
+        f5 = row['Volume'] > row['VOL_MA']
+        f6 = row['Close'] > row['RES']
+        f7 = row['Close'] > row['Open'] and prev1['Close'] < prev1['Open'] # Bull Engulf
+        f8 = row['Close'] > row['SUP']
+        f9 = row['RSI'] > 50
+        f10 = row['Close'] > row['Open']
+        f11 = ta.sma(df['Close'].iloc[i-9:i], 9).iloc[-1] > ta.sma(df['Close'].iloc[i-21:i], 21).iloc[-1]
+
+        confluence = sum([f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11])
+
+        if confluence >= 9: # 9/11 Confluence
+            sl = row['Close'] - row['ATR'] * 1.5
+            tp1 = row['Close'] + row['ATR'] * 1.0
+            tp2 = row['Close'] + row['ATR'] * 2.0
+            tp3 = row['Close'] + row['ATR'] * 3.0
+            signals.append([row.name, 'BUY', row['Close'], sl, tp1, tp2, tp3])
+
+    return pd.DataFrame(signals, columns=['Time','Signal','Entry','SL','TP1','TP2','TP3'])
+
+trades = get_signals(data)
+print(f"\nTotal Signals: {len(trades)}")
+print(trades.head())
