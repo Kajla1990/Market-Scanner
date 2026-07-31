@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kajla Terminal Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js?v=7"></script>
+<!-- CDN की जगह unpkg use किया -->
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
 .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
 .watchlist{display:flex;gap:10px;padding:10px;overflow-x:auto}
 .watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 15px;border-radius:5px;cursor:pointer}
-.watchlist button.active{background:#2563eb;border-color:#2563eb}
+.watchlist button.active{background:#2563eb}
 .chartType{display:flex;gap:10px;padding:0 10px 10px 10px}
 .chartType button{background:#374151;border:none;color:#fff;padding:6px 12px;border-radius:5px;cursor:pointer}
 .chartType button.active{background:#f59e0b;color:#000}
@@ -80,33 +81,18 @@ function drawChart(){
   document.getElementById('chart').innerHTML = '';
   chart = LightweightCharts.createChart(document.getElementById('chart'), {
     layout: { background: { color: '#0b0e14' }, textColor: '#888' },
-    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } }, // Kotak वाली grid
+    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
     rightPriceScale: { borderColor: '#374151' },
     timeScale: { borderColor: '#374151' }
   });
 
-  // KOTAK वाली Candle Color
   candleSeries = chart.addCandlestickSeries({
-    upColor: '#26a69a', // हरा - Kotak जैसा
-    downColor: '#ef5350', // लाल - Kotak जैसा
-    borderDownColor: '#ef5350',
-    borderUpColor: '#26a69a',
-    wickDownColor: '#ef5350',
-    wickUpColor: '#26a69a'
+    upColor: '#26a69a', downColor: '#ef5350',
+    borderDownColor: '#ef5350', borderUpColor: '#26a69a',
+    wickDownColor: '#ef5350', wickUpColor: '#26a69a'
   });
 
   volumeSeries = chart.addHistogramSeries({ priceScaleId: 'volume' });
   chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
 
-  let dataToShow = currentType === 'HeikinAshi'? toHeikinAshi(rawData) : rawData;
-  candleSeries.setData(dataToShow);
-
-  volumeSeries.setData(rawData.map(d=>({
-    time:d.time,
-    value:d.volume,
-    color:d.close>d.open?'#26a69a80':'#ef535080'
-  })));
-
-  // R1 S1 लाइन add करो - Kotak जैसी
-  const lastPrice = rawData[rawData.length-1].close;
-  candleSeries.createPriceLine({ price: lastPrice+70, color: '#f59e0b', lineWidth: 1, lineStyle
+  let dataToShow = currentType === 'HeikinAshi'? toHeikinAshi(rawData
