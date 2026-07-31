@@ -1,84 +1,40 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kajla Terminal Pro</title>
+<div class="tabs">
+  <div class="tab active" onclick="showTab('chart')">Chart</div>
+  <div class="tab" onclick="showTab('holdings')">Holdings</div>
+  <div class="tab" onclick="showTab('orders')">Orders</div>
+</div>
 
-<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<div id="holdings" style="display:none" class="card">
+  <h3>📊 My Holdings - Demat</h3>
+  <table>
+    <tr><th>Stock</th><th>Qty</th><th>Avg</th><th>LTP</th><th>P&L</th></tr>
+    <tr><td>RELIANCE</td><td>10</td><td>2850</td><td>2900</td><td style="color:#22c55e">+500</td></tr>
+    <tr><td>TCS</td><td>5</td><td>3800</td><td>3750</td><td style="color:#ef4444">-250</td></tr>
+  </table>
+  <button onclick="alert('Buy Clicked - Demo')">BUY</button>
+  <button style="background:#ef4444" onclick="alert('Sell Clicked - Demo')">SELL</button>
+</div>
+
+<div id="orders" style="display:none" class="card">
+  <h3>📝 Order Book</h3>
+  <p>No orders yet</p>
+</div>
 
 <style>
-  body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
- .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
-  #chart{width:100%; height:calc(100vh - 50px)}
+.tabs{display:flex;background:#161a22}
+.tab{padding:12px;cursor:pointer;flex:1;text-align:center}
+.tab.active{background:#22c55e;color:#000}
+.card{background:#161a22;margin:10px;padding:10px;border-radius:8px}
+table{width:100%}
+button{background:#22c55e;border:none;padding:8px 15px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
 </style>
-</head>
-<body>
-<div class="header">
-  <b>kajla1990 🇮🇳 Terminal</b>
-  <div style="color:#22c55e">Demo: ₹4,98,000</div>
-</div>
-<div id="chart"></div>
 
 <script>
-// खुद का EMA function - Library की जरूरत नहीं
-function calculateEMA(data, period) {
-    const k = 2 / (period + 1);
-    let emaArray = [];
-    let ema = data[0];
-    for (let i = 0; i < data.length; i++) {
-        ema = data[i] * k + ema * (1 - k);
-        if(i >= period - 1) { // पहले period-1 values skip
-            emaArray.push(ema);
-        }
-    }
-    return emaArray;
-}
-
-window.onload = function() {
-    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-        layout: { background: { color: '#0b0e14' }, textColor: '#DDD' },
-        grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
-    });
-
-    const candleSeries = chart.addCandlestickSeries({
-        upColor: '#22c55e', downColor: '#ef4444',
-        wickUpColor: '#22c55e', wickDownColor: '#ef4444'
-    });
-    
-    const ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: 'EMA 9' });
-    const ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, title: 'EMA 15' });
-
-    // DEMO DATA
-    function generateData() {
-        const data = [];
-        let price = 24500;
-        for(let i = 0; i < 200; i++){
-            price += (Math.random() - 0.5) * 40;
-            data.push({
-                time: Math.floor(Date.now()/1000) - (200-i)*15*60,
-                open: price, high: price + 25, low: price - 25, close: price
-            })
-        }
-        return data;
-    }
-
-    const candleData = generateData();
-    candleSeries.setData(candleData);
-
-    const closes = candleData.map(c => c.close);
-    
-    // EMA Calculate
-    const ema9 = calculateEMA(closes, 9);
-    const ema9Data = ema9.map((val, i) => ({ time: candleData[i+8].time, value: val }));
-    ema9Series.setData(ema9Data);
-    
-    const ema15 = calculateEMA(closes, 15);
-    const ema15Data = ema15.map((val, i) => ({ time: candleData[i+14].time, value: val }));
-    ema15Series.setData(ema15Data);
-    
-    chart.timeScale().fitContent();
+function showTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('chart').style.display = tab=='chart'?'block':'none';
+  document.getElementById('holdings').style.display = tab=='holdings'?'block':'none';
+  document.getElementById('orders').style.display = tab=='orders'?'block':'none';
 }
 </script>
-</body>
-</html>
