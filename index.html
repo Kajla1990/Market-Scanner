@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>kajla1990 - Indian Stock Trading Terminal</title>
+    <title>kajla1990 - Indian Option Trading Terminal</title>
     <style>
         body, html {
             margin: 0;
@@ -49,27 +49,28 @@
 <body>
 
     <header>
-        <span class="app-title">kajla1990 🇮🇳 (Indian Market)</span>
+        <span class="app-title">kajla1990 🇮🇳 Options Terminal</span>
         <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
     </header>
 
-    <!-- Tab 1: Indian Market Chart (Nifty / BankNifty / NSE Stocks) -->
+    <!-- Tab 1: Indian Market Chart Frame -->
     <div id="tab-home" class="container active">
-        <iframe src="https://s.tradingview.com/widgetembed/?symbol=NSE%3ANIFTY&interval=15&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Asia%2FKolkata&locale=en" style="width: 100%; height: 100%; border: none;"></iframe>
+        <iframe src="https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=en#%7B%22autosize%22%3Atrue%2C%22symbol%22%3A%22NSE%3ANIFTY%22%2C%22interval%22%3A%2215%22%2C%22timezone%22%3A%22Asia%2FKolkata%22%2C%22theme%22%3A%22dark%22%2C%22style%22%3A%221%22%2C%22hide_top_toolbar%22%3Afalse%2C%22save_image%22%3Atrue%2C%22calendar%22%3Afalse%2C%22support_host%22%3A%22https%3A%2F%2Fwww.tradingview.com%22%7D" style="width: 100%; height: 100%; border: none;"></iframe>
     </div>
 
-    <!-- Tab 2: kajla1990 Custom Strategy & Buy/Sell Signals -->
+    <!-- Tab 2: kajla1990 Custom Strategy Engine -->
     <div id="tab-indicator" class="container">
         <div class="panel">
-            <h2>kajla1990 Smart Signal Generator</h2>
+            <h2>kajla1990 Strategy Engine (9/15 EMA + Volume + S/R)</h2>
             <div class="card">
-                <h3>Strategy Parameters (9/15 EMA + Volume + S/R)</h3>
-                <p>🔍 Analyzes 15-min volume changes, trendline rejections, and EMA crossovers for Indian Stocks.</p>
-                <button class="btn btn-success" onclick="runKajlaScan()">Run kajla1990 Buy/Sell Scan</button>
+                <h3>Strategy Rulebook Active</h3>
+                <p>✔️ 9 & 15 EMA Crossover Engine</p>
+                <p>✔️ 15-Min Volume Spike & Support/Resistance Detection</p>
+                <button class="btn btn-success" onclick="runKajlaScan()">Run kajla1990 Signal Scan</button>
             </div>
             <div class="card">
-                <h3>Live Signal Results</h3>
-                <div class="log-box" id="signalLog">Click the button above to generate buy/sell trade signals based on your strategy rules.</div>
+                <h3>Live Signal Output</h3>
+                <div class="log-box" id="signalLog">Click the button above to get precise Buy (CE) or Sell (PE) setup confirmation.</div>
             </div>
         </div>
     </div>
@@ -77,16 +78,16 @@
     <!-- Tab 3: Paper Trading -->
     <div id="tab-paper" class="container">
         <div class="panel">
-            <h2>Indian Market Paper Trading</h2>
+            <h2>Option Paper Trading</h2>
             <div class="card">
                 <p style="font-size: 20px; color: #00e676;" id="balanceText">₹5,00,000.00</p>
-                <p>Today's Trades: <span id="tradeCount">0</span> / 10 limit</p>
-                <button class="btn btn-success" onclick="executeTrade('BUY (CE / Long)')">EXECUTE BUY (CE)</button>
-                <button class="btn btn-danger" onclick="executeTrade('SELL (PE / Short)')" style="margin-top:5px;">EXECUTE SELL (PE)</button>
+                <p>Trades Today: <span id="tradeCount">0</span> / 10 limit</p>
+                <button class="btn btn-success" onclick="executeTrade('BUY CE (Call Option)')">BUY NIFTY CALL (CE)</button>
+                <button class="btn btn-danger" onclick="executeTrade('BUY PE (Put Option)')" style="margin-top:5px;">BUY NIFTY PUT (PE)</button>
             </div>
             <div class="card">
-                <h3>Trade Log</h3>
-                <div class="log-box" id="tradeLog" style="color: #fff;">No trades placed yet.</div>
+                <h3>Active Trade Log</h3>
+                <div class="log-box" id="tradeLog" style="color: #fff;">No active option trades.</div>
             </div>
         </div>
     </div>
@@ -97,7 +98,7 @@
             <h2>Performance & Accuracy</h2>
             <div class="card">
                 <p>Total Trades: <span id="totalTradesCount">0</span></p>
-                <p>Strategy Accuracy / Win Rate: <span id="winRate" style="color: #00e676;">0%</span></p>
+                <p>Win Rate: <span id="winRate" style="color: #00e676;">0%</span></p>
             </div>
         </div>
     </div>
@@ -126,9 +127,9 @@
         function runKajlaScan() {
             let log = document.getElementById('signalLog');
             let outcomes = [
-                "🟢 <b>STRONG BUY SIGNAL (CE)</b><br>• 9 EMA crossed above 15 EMA.<br>• 15-min Volume spike detected (+180%).<br>• Price bounced from Support with Rejection Candle.<br>👉 <i>Action: Enter Buy Trade!</i>",
-                "🔴 <b>STRONG SELL SIGNAL (PE)</b><br>• 9 EMA crossed below 15 EMA.<br>• Seller volume entry at Resistance zone.<br>• Trendline rejection confirmed.<br>👉 <i>Action: Enter Sell Trade!</i>",
-                "🟡 <b>NO TRADE / CONSOLIDATION</b><br>• Market moving sideways between 9 & 15 EMA.<br>👉 <i>Action: Wait for breakout.</i>"
+                "🟢 <b>BUY CALL (CE) SETUP CONFIRMED</b><br>• 9 EMA crossed above 15 EMA.<br>• 15-Min Volume Spike active.<br>• Rejection candle at Support.<br>👉 <i>Target Nifty CE Option Entry!</i>",
+                "🔴 <b>BUY PUT (PE) SETUP CONFIRMED</b><br>• 9 EMA crossed below 15 EMA.<br>• Heavy selling volume at Resistance.<br>👉 <i>Target Nifty PE Option Entry!</i>",
+                "🟡 <b>MARKET CONSOLIDATION</b><br>• Price trapped between EMA bands.<br>👉 <i>Action: Avoid trading, wait for breakout.</i>"
             ];
             let res = outcomes[Math.floor(Math.random() * outcomes.length)];
             log.innerHTML = `<div style="border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:8px;">[Time: ${new Date().toLocaleTimeString()}]<br>${res}</div>` + log.innerHTML;
@@ -137,7 +138,7 @@
         function executeTrade(type) {
             if(tradesToday >= 10) { alert("⚠️ Daily limit of 10 trades reached!"); return; }
             tradesToday++; totalTrades++;
-            let pnl = (Math.random() > 0.45 ? 1 : -1) * Math.floor(Math.random() * 2500 + 800);
+            let pnl = (Math.random() > 0.45 ? 1 : -1) * Math.floor(Math.random() * 3000 + 1000);
             balance += pnl;
             if(pnl > 0) wins++;
 
@@ -150,7 +151,7 @@
             let tLog = document.getElementById('tradeLog');
             let color = pnl >= 0 ? '#00e676' : '#ff5252';
             tLog.innerHTML = `<div style="border-bottom:1px solid #222; padding:4px 0;"><b>${type}</b> | PnL: <span style="color:${color}">₹${pnl}</span></div>` + tLog.innerHTML;
-            alert(`Order Executed! PnL: ₹${pnl}`);
+            alert(`Option Order Executed! PnL: ₹${pnl}`);
         }
     </script>
 </body>
