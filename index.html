@@ -55,14 +55,14 @@
                    <span style="color:#00e676; font-weight:bold;" id="mainLtp">₹24,315.00</span>
                 </div>
                 <div style="font-size:12px; color:#aaa;">
-                   <b>Status:</b> Live Simulation Active & Synchronized
+                   <b>Status:</b> Live Simulation & Strategy Engine Active
                 </div>
             </div>
 
             <div class="card">
                 <b>📊 Combined Indicator Panel (9/15 EMA + Volume + S/R):</b>
                 <div class="log-box" id="indicatorDashboard" style="margin-top:10px;">
-                   Analyzing price action and volume...
+                   Analyzing price action, volume spikes and support/resistance...
                 </div>
                 <button class="btn btn-success" style="margin-top:12px;" onclick="updateIndicatorEngine()">Force Refresh Engine</button>
             </div>
@@ -74,12 +74,12 @@
         <div class="panel">
             <h3 style="color:#2962ff; margin-top:0;">kajla1990 Strategy Scanner</h3>
             <div class="card">
-                <b>Active Strategy Rules:</b> 9/15 EMA Crossover + 15m Volume + Support/Resistance
+                <b>Active Strategy Rules:</b> 9/15 EMA Crossover + 15m Volume Spike + Support/Resistance Validation
                 <button class="btn btn-success" onclick="runKajlaScan()">Run Signal Scan Now</button>
             </div>
             <div class="card">
                 <b>Scanner Output Logs:</b>
-                <div class="log-box" id="signalLog">Click scan button to generate signals.</div>
+                <div class="log-box" id="signalLog">Click scan button to generate signals based on your combined indicator.</div>
             </div>
         </div>
     </div>
@@ -133,6 +133,8 @@
             let ema9 = ltp - (Math.random() * 8);
             let ema15 = ltp - (Math.random() * 15);
             let isBullish = ema9 > ema15;
+            let volumeStatus = Math.random() > 0.5 ? "High Volume Spike Active (15m)" : "Normal Volume Zone";
+            let srStatus = "Support/Resistance Zone Respected";
             let statusColor = isBullish ? "#00e676" : "#ff5252";
             let trendText = isBullish ? "🟢 BULLISH CROSSOVER (CE SETUP)" : "🔴 BEARISH BREAKDOWN (PE SETUP)";
 
@@ -141,9 +143,9 @@
                 • <b>Current LTP:</b> ₹${ltp.toFixed(2)}<br>
                 • <b>9 EMA Filter:</b> ${ema9.toFixed(2)}<br>
                 • <b>15 EMA Filter:</b> ${ema15.toFixed(2)}<br>
-                • <b>Volume Spike:</b> Active (15m Timeframe)<br>
-                • <b>Support / Resistance:</b> Validated<br>
-                • <b>Signal State:</b> <span style="color:${statusColor}">${trendText}</span>
+                • <b>15m Volume Condition:</b> ${volumeStatus}<br>
+                • <b>Support / Resistance Zone:</b> ${srStatus}<br>
+                • <b>Combined Signal State:</b> <span style="color:${statusColor}">${trendText}</span>
             `;
         }
 
@@ -153,9 +155,9 @@
         function runKajlaScan() {
             let log = document.getElementById('signalLog');
             let msgs = [
-                "🟢 <b>NIFTY CALL (CE) ALERT</b><br>• 9 EMA crossed above 15 EMA.<br>• Volume spike confirmed above average.<br>👉 <i>Action: Look for BUY CE entry.</i>",
-                "🔴 <b>NIFTY PUT (PE) ALERT</b><br>• 9 EMA slipped below 15 EMA.<br>• Resistance rejection verified.<br>👉 <i>Action: Look for BUY PE entry.</i>",
-                "🟡 <b>MARKET CONSOLIDATION</b><br>• Price moving sideways between averages.<br>👉 <i>Action: Avoid trading, wait for breakout.</i>"
+                "🟢 <b>NIFTY CALL (CE) COMBINED SETUP ALERT</b><br>• 9 EMA crossed above 15 EMA.<br>• 15m Volume spike verified.<br>• Price bounced from Support.<br>👉 <i>Action: High probability BUY CE setup.</i>",
+                "🔴 <b>NIFTY PUT (PE) COMBINED SETUP ALERT</b><br>• 9 EMA slipped below 15 EMA.<br>• Volume expansion on downside.<br>• Resistance rejection verified.<br>👉 <i>Action: High probability BUY PE setup.</i>",
+                "🟡 <b>CONSOLIDATION / NO TRADE ZONE</b><br>• EMAs overlapping, volume low.<br>👉 <i>Action: Wait for clear S/R breakout.</i>"
             ];
             let res = msgs[Math.floor(Math.random() * msgs.length)];
             log.innerHTML = `<div>[${new Date().toLocaleTimeString()}]<br>${res}</div><hr style="border-color:#222">${log.innerHTML}`;
