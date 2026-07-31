@@ -4,95 +4,97 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kajla Terminal Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js?v=5"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js?v=6"></script>
 <style>
 body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
 .header{display:flex;justify-content:space-between;padding:10px;background:#161a22}
-.watchlist{display:flex;gap:10px;padding:10px;overflow-x:auto;background:#0b0e14}
+.watchlist{display:flex;gap:10px;padding:10px;overflow-x:auto}
 .watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 15px;border-radius:5px;cursor:pointer}
-.watchlist button.active{background:#2563eb;border-color:#2563eb}
-.chartType{display:flex;gap:10px;padding:0 10px 10px 10px}
-.chartType button{background:#374151;border:none;color:#fff;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer}
+.watchlist button.active{background:#2563eb}
+.chartType{display:flex;gap:10px;padding:0 10px 10px 10px;flex-wrap:wrap}
+.chartType button{background:#374151;border:none;color:#fff;padding:6px 12px;border-radius:5px;cursor:pointer}
 .chartType button.active{background:#f59e0b;color:#000}
-  #chart{width:100%; height:400px}
+#chart{width:100%; height:420px}
 .card{background:#161a22;margin:10px;padding:12px;border-radius:8px}
-.btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold;margin-right:10px}
+.btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold}
 .btn-sell{background:#ef4444;border:none;padding:10px 25px;border-radius:5px;color:#fff;font-weight:bold}
 </style>
 </head>
 <body>
-<div class="header">
-  <b>kajla1990 🇮🇳 Terminal</b>
-  <div id="balance" style="color:#22c55e">Demo: ₹4,98,000</div>
-</div>
+<div class="header"><b>kajla1990 🇮🇳 Terminal</b><div style="color:#22c55e">Demo: ₹4,98,000</div></div>
 
 <div class="watchlist">
-  <button class="active" onclick="changeStock('NIFTY', this)">NIFTY</button>
-  <button onclick="changeStock('BANKNIFTY', this)">BANKNIFTY</button>
-  <button onclick="changeStock('RELIANCE', this)">RELIANCE</button>
+<button class="active" onclick="changeStock('NIFTY', this)">NIFTY</button>
+<button onclick="changeStock('BANKNIFTY', this)">BANKNIFTY</button>
+<button onclick="changeStock('RELIANCE', this)">RELIANCE</button>
 </div>
 
 <div class="chartType">
-  <button class="active" onclick="changeChart('Candlestick', this)">Candlestick</button>
-  <button onclick="changeChart('Line', this)">Line</button>
-  <button onclick="changeChart('Area', this)">Area</button>
-  <button onclick="changeChart('Bar', this)">Bar</button>
+<button class="active" onclick="changeChart('Candlestick', this)">Japanese Candle</button>
+<button onclick="changeChart('HeikinAshi', this)">Heikin Ashi</button>
+<button onclick="changeChart('Line', this)">Line</button>
+<button onclick="changeChart('Area', this)">Area</button>
 </div>
 
 <div id="chart"></div>
 
 <div class="card">
-  <h3>Signal: <span id="signal" style="color:#22c55e">BUY SIGNAL</span></h3>
-  <button class="btn-buy">BUY</button>
-  <button class="btn-sell">SELL</button>
+<h3>Signal: <span id="signal" style="color:#22c55e">BUY SIGNAL</span></h3>
+<button class="btn-buy">BUY</button>
+<button class="btn-sell">SELL</button>
 </div>
 
 <script>
-let chart, series;
+let chart, candleSeries, volumeSeries;
 let currentType = 'Candlestick';
-let candleData = [];
+let rawData = [];
 
-// Demo data बनाओ
 function generateData(){
-  candleData = [];
+  rawData = [];
   let price = 24300 + Math.random()*500;
   for(let i = 0; i < 100; i++){
       price += (Math.random() - 0.5) * 30;
-      candleData.push({
+      rawData.push({
           time: Math.floor(Date.now()/1000) - (100-i)*15*60,
-          open: price, high: price + 20, low: price - 20, close: price
+          open: price, high: price + 20, low: price - 20, close: price,
+          volume: Math.random() * 100000
       })
   }
 }
 
+// Heikin Ashi calculate करने का function
+function toHeikinAshi(data){
+    let haData = [];
+    for(let i=0; i<data.length; i++){
+        let o = i===0? (data[i].open + data[i].close)/2 : (haData[i-1].open + haData[i-1].close)/2;
+        let c = (data[i].open + data[i].high + data[i].low + data[i].close)/4;
+        let h = Math.max(data[i].high, o, c);
+        let l = Math.min(data[i].low, o, c);
+        haData.push({time:data[i].time, open:o, high:h, low:l, close:c});
+    }
+    return haData;
+}
+
 function drawChart(){
   document.getElementById('chart').innerHTML = '';
-  // Price scale को दाएं तरफ थोड़ा padding दे दिया ताकि चिपके नहीं
   chart = LightweightCharts.createChart(document.getElementById('chart'), {
     layout: { background: { color: '#0b0e14' }, textColor: '#DDD' },
-    rightPriceScale: {
-        borderVisible: false,
-        scaleMargins: { top: 0.1, bottom: 0.1 }, // ऊपर नीचे space
-    },
-    timeScale: { timeVisible: true, secondsVisible: false }
+    rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.2 } },
   });
 
-  if(currentType === 'Candlestick'){
-    series = chart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444', borderDownColor: '#ef4444', borderUpColor: '#22c55e' });
-    series.setData(candleData);
-  }
-  if(currentType === 'Line'){
-    series = chart.addLineSeries({ color: '#2962FF', lineWidth: 2 });
-    series.setData(candleData.map(d=>({time:d.time, value:d.close})));
-  }
-  if(currentType === 'Area'){
-    series = chart.addAreaSeries({ topColor: 'rgba(41, 98, 255, 0.56)', bottomColor: 'rgba(41, 98, 255, 0.04)', lineColor: '#2962FF', lineWidth: 2 });
-    series.setData(candleData.map(d=>({time:d.time, value:d.close})));
-  }
-  if(currentType === 'Bar'){
-    series = chart.addBarSeries({ upColor: '#22c55e', downColor: '#ef4444' });
-    series.setData(candleData);
-  }
+  candleSeries = chart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444', borderDownColor: '#ef4444', borderUpColor: '#22c55e' });
+  volumeSeries = chart.addHistogramSeries({ priceScaleId: 'volume', priceFormat: { type: 'volume' } });
+  chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+
+  let dataToShow = currentType === 'HeikinAshi'? toHeikinAshi(rawData) : rawData;
+  candleSeries.setData(dataToShow);
+
+  volumeSeries.setData(rawData.map(d=>({
+    time:d.time,
+    value:d.volume,
+    color:d.close>d.open?'#26a69a80':'#ef535080'
+  })));
+
   chart.timeScale().fitContent();
 }
 
@@ -110,10 +112,7 @@ function changeStock(symbol, btn){
   drawChart();
 }
 
-window.onload = ()=>{
-  generateData();
-  drawChart();
-};
+window.onload = ()=>{ generateData(); drawChart(); };
 </script>
 </body>
 </html>
