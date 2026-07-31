@@ -4,18 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kajla Terminal Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js?v=3"></script>
 <style>
   body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
-.header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
+.header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px;position:sticky;top:0;z-index:10}
 .watchlist{display:flex;gap:10px;padding:10px;overflow-x:auto;background:#0b0e14}
-.watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 15px;border-radius:5px;font-weight:bold}
+.watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 15px;border-radius:5px;font-weight:bold;cursor:pointer}
 .watchlist button.active{background:#2563eb;border-color:#2563eb}
   #chart{width:100%; height:380px;background:#0b0e14}
 .card{background:#161a22;margin:10px;padding:12px;border-radius:8px}
-.btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
-.btn-sell{background:#ef4444;border:none;padding:10px 25px;border-radius:5px;color:#fff;font-weight:bold;margin:5px}
-  table{width:100%;border-collapse:collapse} td,th{padding:6px;text-align:left;font-size:13px}
+.btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold;margin:5px;cursor:pointer}
+.btn-sell{background:#ef4444;border:none;padding:10px 25px;border-radius:5px;color:#fff;font-weight:bold;margin:5px;cursor:pointer}
+  table{width:100%;border-collapse:collapse} td,th{padding:8px;text-align:left;font-size:13px;border-bottom:1px solid #374151}
 .profit{color:#22c55e}.loss{color:#ef4444}
 </style>
 </head>
@@ -25,20 +25,4 @@
   <div id="balance" style="color:#22c55e">Demo: ₹4,98,000</div>
 </div>
 
-<div class="watchlist">
-  <button class="active" onclick="changeStock('NIFTY', this)">NIFTY</button>
-  <button onclick="changeStock('BANKNIFTY', this)">BANKNIFTY</button>
-  <button onclick="changeStock('RELIANCE', this)">RELIANCE</button>
-</div>
-
-<div id="chart"></div>
-
-<div class="card">
-  <h3>Signal: <span id="signal">CHECKING...</span></h3>
-  <button class="btn-buy" onclick="placeOrder('BUY')">BUY 1 Lot</button>
-  <button class="btn-sell" onclick="placeOrder('SELL')">SELL 1 Lot</button>
-</div>
-
-<div class="card">
-  <h3>📊 My Holdings</h3>
-  <table id="holdingsTable"><tr><th>Stock</th><th>Qty</th><th>Avg</th><th>P&
+<div
