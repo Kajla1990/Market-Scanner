@@ -44,55 +44,29 @@
         <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
     </header>
 
-    <!-- Tab 1: TradingView Symbol Overview Widget (Guaranteed Indian Market Load) -->
+    <!-- Tab 1: TradingView Advanced Interactive Chart with Nifty -->
     <div id="tab-home" class="container active">
-        <div class="panel">
-            <h3 style="color: #2962ff; margin-top: 0;">Indian Market Live Feed</h3>
-            
-            <!-- TradingView Widget BEGIN -->
-            <div class="tradingview-widget-container" style="height:250px;width:100%;margin-bottom:15px;">
-                <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
-                {
-                  "symbols": [
-                    ["NSE:NIFTY|1D"],
-                    ["NSE:BANKNIFTY|1D"],
-                    ["BSE:SENSEX|1D"]
-                  ],
-                  "chartOnly": false,
-                  "width": "100%",
-                  "height": "100%",
-                  "locale": "in",
-                  "colorTheme": "dark",
-                  "autosize": true,
-                  "showVolume": true,
-                  "hideDateRanges": false,
-                  "scalePosition": "right",
-                  "scaleMode": "Normal",
-                  "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
-                  "noTimeScale": false,
-                  "valuesTracking": "1",
-                  "changeMode": "price-and-percent",
-                  "chartType": "candlestick",
-                  "maLineColor": "#2962FF",
-                  "maLineWidth": 2,
-                  "maLength": 9,
-                  "lineWidth": 2,
-                  "lineType": 0
-                }
-                </script>
-            </div>
-            <!-- TradingView Widget END -->
-
-            <div class="card">
-                <b>Direct TradingView Links (One-Click Full Terminal):</b>
-                <a href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" class="btn">🚀 Open Nifty 50 Full Chart</a>
-                <a href="https://in.tradingview.com/chart/?symbol=NSE%3ABANKNIFTY" target="_blank" class="btn" style="background:#00838f;">🚀 Open BankNifty Full Chart</a>
-            </div>
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+            {
+                "autosize": true,
+                "symbol": "NSE:NIFTY",
+                "interval": "15",
+                "timezone": "Asia/Kolkata",
+                "theme": "dark",
+                "style": "1",
+                "locale": "in",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "calendar": false,
+                "support_host": "https://www.tradingview.com"
+            }
+            </script>
         </div>
     </div>
 
-    <!-- Tab 2: kajla1990 Custom Strategy Engine -->
+    <!-- Tab 2: kajla1990 Custom Strategy Engine & Indicators -->
     <div id="tab-indicator" class="container">
         <div class="panel">
             <h3 style="color:#2962ff; margin-top:0;">kajla1990 Strategy Engine</h3>
