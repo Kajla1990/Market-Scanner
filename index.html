@@ -6,44 +6,116 @@
 <title>Kajla Terminal Pro</title>
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
-.header{padding:10px;background:#161a22}
-#chart{width:100%; height:450px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:#0b0e14;color:#fff}
+.header{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#161a22;position:sticky;top:0;z-index:10}
+.logo{font-weight:bold;color:#f59e0b}
+.balance{color:#22c55e}
+.watchlist{display:flex;gap:8px;padding:10px;overflow-x:auto;background:#161a22}
+.watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 16px;border-radius:6px;white-space:nowrap}
+.watchlist button.active{background:#2563eb;border-color:#2563eb}
+.chartType{display:flex;gap:8px;padding:0 10px 10px 10px;flex-wrap:wrap}
+.chartType button{background:#374151;border:none;color:#fff;padding:6px 12px;border-radius:5px;font-size:12px}
+.chartType button.active{background:#f59e0b;color:#000;font-weight:bold}
+#chart{width:100%; height:60vh}
+.bottomPanel{background:#161a22;padding:12px;position:sticky;bottom:0}
+.signal{font-size:16px;margin-bottom:10px}
+.btns{display:flex;gap:10px}
+.btn-buy{flex:1;background:#22c55e;border:none;padding:14px;border-radius:8px;color:#000;font-weight:bold;font-size:16px}
+.btn-sell{flex:1;background:#ef4444;border:none;padding:14px;border-radius:8px;color:#fff;font-weight:bold;font-size:16px}
 </style>
 </head>
 <body>
-<div class="header"><b>kajla1990 🇮🇳 Terminal - NIFTY</b></div>
+
+<div class="header">
+  <div class="logo">kajla1990 🇮🇳 Terminal</div>
+  <div class="balance">Demo: ₹4,98,000</div>
+</div>
+
+<div class="watchlist">
+  <button class="active" onclick="changeStock('NIFTY',this)">NIFTY</button>
+  <button onclick="changeStock('BANKNIFTY',this)">BANKNIFTY</button>
+  <button onclick="changeStock('FINNIFTY',this)">FINNIFTY</button>
+  <button onclick="changeStock('RELIANCE',this)">RELIANCE</button>
+  <button onclick="changeStock('TCS',this)">TCS</button>
+</div>
+
+<div class="chartType">
+  <button class="active" onclick="changeChart('Candlestick',this)">Candle</button>
+  <button onclick="changeChart('HeikinAshi',this)">Heikin Ashi</button>
+  <button onclick="changeChart('Line',this)">Line</button>
+  <button onclick="changeChart('Area',this)">Area</button>
+</div>
+
 <div id="chart"></div>
 
+<div class="bottomPanel">
+  <div class="signal">Signal: <span id="signal" style="color:#ef4444">SELL SIGNAL</span> | LTP: <span id="ltp">24003.57</span></div>
+  <div class="btns">
+    <button class="btn-buy">BUY</button>
+    <button class="btn-sell">SELL</button>
+  </div>
+</div>
+
 <script>
-const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-    layout: { background: { color: '#0b0e14' }, textColor: '#DDD' }, // काला background
-    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
-    width: document.getElementById('chart').clientWidth,
-    height: 450
-});
+let chart, candleSeries, volumeSeries;
+let currentType = 'Candlestick';
+let rawData = [];
 
-const candleSeries = chart.addCandlestickSeries({
-    upColor: '#26a69a', // Kotak हरा
-    downColor: '#ef5350', // Kotak लाल
-    borderDownColor: '#ef5350',
-    borderUpColor: '#26a69a',
-    wickDownColor: '#ef5350',
-    wickUpColor: '#26a69a'
-});
-
-// 100 candle का demo data
-let data = [];
-let price = 24300;
-for(let i=0; i<100; i++){
-    price += (Math.random() - 0.5) * 50;
-    data.push({
-        time: Math.floor(Date.now()/1000) - (100-i)*15*60, // 15min candle
-        open: price, high: price+30, low: price-30, close: price
-    })
+function generateData(base){
+  rawData = [];
+  let price = base;
+  for(let i = 0; i < 200; i++){
+      price += (Math.random() - 0.48) * 40;
+      rawData.push({
+          time: Math.floor(Date.now()/1000) - (200-i)*15*60,
+          open: price, high: price + 30, low: price - 30, close: price,
+          volume: Math.random() * 1000000
+      })
+  }
 }
-candleSeries.setData(data);
-chart.timeScale().fitContent();
-</script>
-</body>
-</html>
+
+function toHeikinAshi(data){
+    let haData = [];
+    for(let i=0; i<data.length; i++){
+        let o = i===0? (data[i].open + data[i].close)/2 : (haData[i-1].open + haData[i-1].close)/2;
+        let c = (data[i].open + data[i].high + data[i].low + data[i].close)/4;
+        let h = Math.max(data[i].high, o, c);
+        let l = Math.min(data[i].low, o, c);
+        haData.push({time:data[i].time, open:o, high:h, low:l, close:c});
+    }
+    return haData;
+}
+
+function drawChart(){
+  document.getElementById('chart').innerHTML = '';
+  chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    layout: { background: { color: '#0b0e14' }, textColor: '#888' },
+    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
+    rightPriceScale: { borderColor: '#374151' },
+    timeScale: { borderColor: '#374151', timeVisible: true }
+  });
+
+  candleSeries = chart.addCandlestickSeries({
+    upColor: '#26a69a', downColor: '#ef5350',
+    borderDownColor: '#ef5350', borderUpColor: '#26a69a',
+    wickDownColor: '#ef5350', wickUpColor: '#26a69a'
+  });
+
+  volumeSeries = chart.addHistogramSeries({ priceScaleId: 'volume' });
+  chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+
+  let dataToShow = currentType === 'HeikinAshi'? toHeikinAshi(rawData) : rawData;
+  candleSeries.setData(dataToShow);
+
+  volumeSeries.setData(rawData.map(d=>({
+    time:d.time, value:d.volume,
+    color:d.close>d.open?'#26a69a80':'#ef535080'
+  })));
+
+  const lastPrice = rawData[rawData.length-1].close;
+  document.getElementById('ltp').innerText = lastPrice.toFixed(2);
+  document.getElementById('signal').innerText = lastPrice > rawData[0].close? 'BUY SIGNAL' : 'SELL SIGNAL';
+  document.getElementById('signal').style.color = lastPrice > rawData[0].close? '#22c55e' : '#ef4444';
+  
+  candleSeries.createPriceLine({ price: lastPrice+80, color: '#f59e0b', lineWidth: 1, lineStyle: 2, axisLabelVisible:
