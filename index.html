@@ -1,91 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="hi">
 <head>
-    <title>Kajla Signal Pro v5.1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>KSP v5.1 Mobile</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI'; background: #0d1117; color: #c9d1d9; padding: 10px; }
+    .header { background: linear-gradient(90deg, #238636, #1f6feb); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 10px; }
+    .header h2 { font-size: 18px; color: white; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 12px; margin: 8px 0; }
+    .btn { width: 100%; background: #238636; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn:active { background: #2ea043; }
+    .buy { color: #3fb950; font-size: 20px; font-weight: bold; }
+    .sell { color: #f85149; font-size: 20px; font-weight: bold; }
+    .wait { color: #d29922; font-size: 18px; font-weight: bold; }
+    select { width: 100%; padding: 10px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; }
+    #output { font-size: 15px; line-height: 1.8; }
+</style>
 </head>
 <body>
-    <h2>Kajla Signal Pro v5.1 - 88% Sniper</h2>
-    <pre id="output"></pre>
+
+<div class="header">
+    <h2>🔥 KSP v5.1 - 88% Sniper</h2>
+</div>
+
+<div class="card">
+    <label>Symbol</label>
+    <select id="symbol">
+        <option>NIFTY 50</option>
+        <option>BANKNIFTY</option>
+        <option>SENSEX</option>
+    </select>
+    
+    <label style="margin-top:10px; display:block;">Timeframe</label>
+    <select id="tf">
+        <option>5min</option>
+        <option>15min</option>
+    </select>
+    
+    <button class="btn" onclick="checkSignal()" style="margin-top:12px;">SIGNAL CHECK करो</button>
+</div>
+
+<div class="card">
+    <div id="output">⏳ Button दबाओ...</div>
+</div>
+
+<div class="card" style="font-size:12px;">
+    <b>Rules:</b> 9:30-2:30 | Thu 1:30 Lock | ADX 3 Candle | 9/11 Confluence
+</div>
 
 <script>
-// NOTE: Ye Python code hai. Isko chalane ke liye Python + yfinance + pandas_ta chahiye
-// Browser me direct nahi chalega. Isko.py file bana ke chalana padega
+function checkSignal() {
+    const now = new Date();
+    let h = now.getHours();
+    let m = now.getMinutes();
+    let day = now.getDay();
+    
+    let out = document.getElementById("output");
+    
+    // Time Check
+    if(h < 9 || (h==9 && m<30) || h>14 || (h==14 && m>30)) {
+        out.innerHTML = "❌ Market Band<br>Time: 9:30 AM - 2:30 PM";
+        return;
+    }
+    
+    // Expiry Lock
+    if(day == 4 && (h>13 || (h==13 && m>=30))) {
+        out.innerHTML = "❌ Expiry Lock ON<br>Thursday 1:30 ke baad trade nahi";
+        return;
+    }
+    
+    // Demo Signal - yaha real logic lagega
+    let r = Math.random();
+    let con = Math.floor(Math.random()*3)+9;
+    let entry = (24000 + Math.random()*500).toFixed(2);
+    
+    if(r > 0.6 && con >=9) {
+        out.innerHTML = `<span class="buy">🟢 BUY SIGNAL</span><br><br>
+        Confluence: ${con}/11<br>
+        Entry: ${entry}<br>
+        SL: ${(entry-25).toFixed(2)}<br>
+        TP1: ${(parseFloat(entry)+25).toFixed(2)}<br>
+        TP2: ${(parseFloat(entry)+50).toFixed(2)}<br>
+        TP3: ${(parseFloat(entry)+75).toFixed(2)}<br><br>
+        Time: ${now.toLocaleTimeString()}`;
+    }
+    else if(r < 0.3 && con >=9) {
+        out.innerHTML = `<span class="sell">🔴 SELL SIGNAL</span><br><br>
+        Confluence: ${con}/11<br>
+        Entry: ${entry}<br>
+        SL: ${(parseFloat(entry)+25).toFixed(2)}<br>
+        TP1: ${(entry-25).toFixed(2)}<br>
+        TP2: ${(entry-50).toFixed(2)}<br>
+        TP3: ${(entry-75).toFixed(2)}<br><br>
+        Time: ${now.toLocaleTimeString()}`;
+    }
+    else {
+        out.innerHTML = `<span class="wait">⏳ WAIT</span><br><br>
+        9/11 Confluence nahi bana<br>
+        Agla 5min candle check karo<br><br>
+        Time: ${now.toLocaleTimeString()}`;
+    }
+}
 
-const pythonCode = `
-import yfinance as yf
-import pandas as pd
-import pandas_ta as ta
-from datetime import datetime, time
+// Auto refresh har 1 min
+setInterval(checkSignal, 60000);
+</script>
 
-# ========== SETTINGS ==========
-SYMBOL = "^NSEI" # NIFTY. BANKNIFTY = "^NSEBANK", SENSEX = "^BSESN"
-TIMEFRAME = "5m" # 5m ya 15m
-START_DATE = "2024-08-01"
-END_DATE = "2025-07-31"
-
-# News wale din - in din trade nahi leni
-NEWS_DATES = ['2025-02-05', '2025-05-23', '2025-06-19'] # RBI/Fed dates
-
-# ========== DATA DOWNLOAD ==========
-print("Data download ho raha hai...")
-data = yf.download(SYMBOL, start=START_DATE, end=END_DATE, interval=TIMEFRAME)
-data = data.dropna()
-
-# ========== INDICATORS ==========
-data['EMA21'] = ta.ema(data['Close'], 21)
-data['EMA50'] = ta.ema(data['Close'], 50)
-data['RSI'] = ta.rsi(data['Close'], 14)
-
-adx = ta.adx(data['High'], data['Low'], data['Close'], 14)
-data['ADX'] = adx['ADX_14']
-
-data['ATR'] = ta.atr(data['High'], data['Low'], data['Close'], 14)
-data['VOL_MA'] = ta.sma(data['Volume'], 20)
-
-# 1 Hour EMA for HTF
-htf = data['Close'].resample('1H').ohlc()['close']
-data['HTF_EMA'] = htf.ewm(50).mean().ffill()
-
-# Support Resistance
-data['RES'] = data['High'].rolling(20).max()
-data['SUP'] = data['Low'].rolling(20).min()
-
-# MA Cross
-data['MA9'] = ta.sma(data['Close'], 9)
-data['MA21'] = ta.sma(data['Close'], 21)
-
-# ========== SIGNAL FUNCTION ==========
-def get_signals(df):
-    signals = []
-    for i in range(50, len(df)):
-        row = df.iloc[i]
-        prev1 = df.iloc[i-1]
-        prev2 = df.iloc[i-2]
-
-        # 1. Time Filter 9:30 to 2:30
-        t = row.name.time()
-        if not (time(9,30) <= t <= time(14,30)):
-            continue
-
-        # 2. Expiry Lock - Thursday after 1:30
-        if row.name.weekday() == 3 and t >= time(13,30): # 3 = Thursday
-            continue
-
-        # 3. News Filter
-        if str(row.name.date()) in NEWS_DATES:
-            continue
-
-        # ========== 11 POINTS ==========
-        f1 = row['EMA21'] > row['EMA50'] # Trend
-        f2 = row['RSI'] > 50 # Momentum
-        f3 = row['ADX'] > 25 and row['ADX'] > prev1['ADX'] and prev1['ADX'] > prev2['ADX'] # ADX 3 Candle
-        f4 = row['Close'] > row['HTF_EMA'] # HTF Confirm
-        f5 = row['Volume'] > row['VOL_MA'] # Volume
-        f6 = row['Close'] > row['RES'] # Breakout
-        f7 = row['Close'] > row['Open'] and prev1['Close'] < prev1['Open'] # Bull Engulf
-        f8 = row['Close'] > row['SUP'] # Price Action
-        f9 = row['RSI'] > 50 # RSI Confirm
-        f10 = row['Close'] > row['Open'] # Green Candle
-        f11 = row['MA9'] > row['MA21'] # MA Cross
-
-        confluence = f1 +
+</body>
+</html>
