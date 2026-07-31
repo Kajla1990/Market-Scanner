@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kajla1990 Terminal - Market Scanner</title>
-    <!-- Lightweight Charts Library -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,6 +37,12 @@
             flex: 1;
             width: 100%;
             position: relative;
+            background-color: #121212;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
         .footer {
             background-color: #181A21;
@@ -64,7 +68,9 @@
         <div class="header-balance">Demo: ₹4,98,000</div>
     </div>
 
-    <div id="chart" class="chart-container"></div>
+    <div class="chart-container" id="chartBox">
+        <canvas id="niftyCanvas"></canvas>
+    </div>
 
     <div class="footer">
         <div class="footer-item active">Chart & Ind</div>
@@ -74,66 +80,73 @@
     </div>
 
     <script>
-        // सुरक्षित तरीके से चार्ट इनिशियलाइज़ करना
-        const chartDom = document.getElementById('chart');
-        
-        const chart = LightweightCharts.createChart(chartDom, {
-            width: chartDom.clientWidth,
-            height: chartDom.clientHeight,
-            layout: {
-                backgroundColor: '#121212',
-                textColor: '#d1d4dc',
-            },
-            grid: {
-                vertLines: { color: '#2b2b43' },
-                horzLines: { color: '#2b2b43' },
-            },
-            timeScale: {
-                timeVisible: true,
-            },
-        });
+        const canvas = document.getElementById('niftyCanvas');
+        const ctx = canvas.getContext('2d');
+        const box = document.getElementById('chartBox');
 
-        // कैंडल्स की सीरीज जोड़ना
-        const candlestickSeries = chart.addCandlestickSeries({
-            upColor: '#00E676',
-            downColor: '#FF1744',
-            borderVisible: false,
-            wickUpColor: '#00E676',
-            wickDownColor: '#FF1744',
-        });
-
-        // डमी डेटा जनरेट करके चार्ट पर डालना ताकि सफेद स्क्रीन न आए
-        function loadDefaultData() {
-            let data = [];
-            let time = Math.floor(Date.now() / 1000) - (50 * 900); // 15 मिनट पीछे से
-            let price = 24315;
-
-            for (let i = 0; i < 50; i++) {
-                let change = (Math.random() - 0.48) * 40;
-                let open = price;
-                let close = open + change;
-                let high = Math.max(open, close) + Math.random() * 20;
-                let low = Math.min(open, close) - Math.random() * 20;
-                
-                data.push({
-                    time: time + (i * 900),
-                    open: parseFloat(open.toFixed(2)),
-                    high: parseFloat(high.toFixed(2)),
-                    low: parseFloat(low.toFixed(2)),
-                    close: parseFloat(close.toFixed(2))
-                });
-                price = close;
-            }
-            candlestickSeries.setData(data);
+        function resizeCanvas() {
+            canvas.width = box.clientWidth;
+            canvas.height = box.clientHeight;
+            drawChart();
         }
 
-        loadDefaultData();
+        window.addEventListener('resize', resizeCanvas);
 
-        // स्क्रीन साइज बदलने पर चार्ट को ऑटो-एडजस्ट करना
-        window.addEventListener('resize', () => {
-            chart.resize(chartDom.clientWidth, chartDom.clientHeight);
-        });
+        function drawChart() {
+            ctx.fillStyle = '#121212';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            //Grid lines
+            ctx.strokeStyle = '#222222';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for(let j = 0; j < canvas.height; j += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, j);
+                ctx.lineTo(canvas.width, j);
+                ctx.stroke();
+            }
+
+            // Dummy Candlestick & Indicator Drawing
+            let candles = 30;
+            let candWidth = canvas.width / candles;
+            let price = canvas.height / 2;
+
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#00E676';
+            ctx.fillText("NSE: NIFTY 50 | 15m | 9/15 EMA Active", 15, 25);
+
+            for(let i = 0; i < candles; i++) {
+                let x = i * candWidth + candWidth / 2;
+                let h = Math.sin(i * 0.4) * 50;
+                let open = price + h;
+                let close = open + (Math.random() - 0.5) * 30;
+                let high = Math.min(open, close) - 15 - Math.random() * 20;
+                let low = Math.max(open, close) + 15 + Math.random() * 20;
+
+                let isGreen = close <= open; // Canvas coordinates are inverted vertically
+                ctx.strokeStyle = isGreen ? '#00E676' : '#FF1744';
+                ctx.fillStyle = isGreen ? '#00E676' : '#FF1744';
+                ctx.lineWidth = 2;
+
+                // Wick
+                ctx.beginPath();
+                ctx.moveTo(x, high);
+                ctx.lineTo(x, low);
+                ctx.stroke();
+
+                // Body
+                ctx.fillRect(x - candWidth/3, Math.min(open, close), candWidth/1.5, Math.abs(close - open) || 2);
+            }
+        }
+
+        // Initial load
+        setTimeout(resizeCanvas, 100);
     </script>
-
 </body>
 </html>
