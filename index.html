@@ -1,72 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Kajla Terminal - Fixed</title>
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<title>Kajla Terminal Pro - Demo</title>
+<script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/technicalindicators@3.1.0/dist/browser.js"></script>
 <style>
-  body { margin:0; background:#0e1117; color:#fff; font-family:sans-serif; }
-  #chart { width:100%; height:90vh; }
-  .header { padding:10px; background:#161a22; font-size:14px; color:#4ade80; }
+  body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
+  .header{display:flex;justify-content:space-between;padding:10px;background:#161a22}
+  .tabs{display:flex;background:#161a22}
+  .tab{padding:12px;cursor:pointer;flex:1;text-align:center}
+  .tab.active{background:#22c55e;color:#000}
+  #chart{height:50vh}
+  .card{background:#161a22;margin:10px;padding:10px;border-radius:8px}
+  table{width:100%;font-size:12px;border-collapse:collapse}
+  td,th{padding:6px;text-align:left}
+  .green{color:#22c55e}.red{color:#ef4444}
+  button{background:#22c55e;border:none;padding:8px 15px;border-radius:5px;color:#000;font-weight:bold}
 </style>
 </head>
 <body>
-<div class="header">kajla1990 Terminal | NSE: NIFTY 50 | 15m | 9/15 EMA Active | Demo: ₹4,98,000</div>
-<div id="chart"></div>
+
+<div class="header">
+  <b>Kajla Terminal Pro</b>
+  <div>Funds: <span class="green">₹4,98,000</span></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
+  <div class="tab" onclick="showTab('holdings')">Holdings</div>
+  <div class="tab" onclick="showTab('orders')">Orders</div>
+  <div class="tab" onclick="showTab('funds')">Funds</div>
+</div>
+
+<div id="dashboard">
+  <div id="chart"></div>
+  <div class="card">
+    <b>NIFTY 50</b> <span class="green">24,550.25 +0.85%</span>
+    <br><button onclick="buySell('BUY')">BUY</button> <button style="background:#ef4444" onclick="buySell('SELL')">SELL</button>
+  </div>
+</div>
+
+<div id="holdings" style="display:none">
+  <div class="card">
+    <h3>My Holdings - Demat</h3>
+    <table><tr><th>Stock</th><th>Qty</th><th>Avg</th><th>LTP</th><th>P&L</th></tr>
+    <tr><td>RELIANCE</td><td>10</td><td>2850</td><td>2900</td><td class="green">+500</td></tr>
+    <tr><td>TCS</td><td>5</td><td>3800</td><td>3750</td><td class="red">-250</td></tr>
+    </table>
+  </div>
+</div>
+
+<div id="orders" style="display:none">
+  <div class="card"><h3>Order Book</h3><p>No orders yet</p></div>
+</div>
+
+<div id="funds" style="display:none">
+  <div class="card">
+    <h3>Fund Summary</h3>
+    <p>Available Margin: <b class="green">₹4,98,000</b></p>
+    <p>Used Margin: ₹0</p>
+    <button>Add Funds</button> <button>Withdraw</button>
+  </div>
+</div>
 
 <script>
-const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-    layout: { background: { color: '#0e1117' }, textColor: '#DDD' },
-    grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } },
-    timeScale: { timeVisible: true },
-});
-
-const candleSeries = chart.addCandlestickSeries();
-const ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: 'EMA 9' });
-const ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, title: 'EMA 15' });
-
-// --- IMPORTANT: Yaha apna data API daalo ---
-// Abhi demo data hai. Isko apne scanner ke /api/data se replace karna
-function getDemoData() {
-    const data = [];
-    let price = 24500;
-    for(let i = 0; i < 200; i++){
-        price += (Math.random() - 0.5) * 50;
-        data.push({
-            time: new Date(Date.now() - (200-i)*15*60*1000).getTime()/1000,
-            open: price,
-            high: price + 20,
-            low: price - 20,
-            close: price + (Math.random() - 0.5) * 10
-        })
-    }
-    return data;
+function showTab(tab){
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  ['dashboard','holdings','orders','funds'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById(tab).style.display='block';
 }
 
-function updateChart() {
-    const candleData = getDemoData(); // <-- yaha fetch('/api/candles') lagao
-    
-    candleSeries.setData(candleData);
-    
-    const closes = candleData.map(c => c.close);
-    
-    // EMA 9
-    const ema9 = technicalindicators.EMA.calculate({period: 9, values: closes});
-    const ema9Data = ema9.map((val, i) => ({ time: candleData[i+8].time, value: val }));
-    ema9Series.setData(ema9Data);
-    
-    // EMA 15
-    const ema15 = technicalindicators.EMA.calculate({period: 15, values: closes});
-    const ema15Data = ema15.map((val, i) => ({ time: candleData[i+14].time, value: val }));
-    ema15Series.setData(ema15Data);
-    
-    chart.timeScale().fitContent();
+function buySell(type){
+  alert(type + " Order Placed - Demo Mode\nReal trading ke liye broker API chahiye: Zerodha Kite, Angel Broking SmartAPI");
 }
 
-// Pehli baar chalao + har 15 sec me update karo
-updateChart();
-setInterval(updateChart, 15000); 
+// Chart
+const chart = LightweightCharts.createChart(document.getElementById('chart'),{layout:{background:{color:'#0b0e14'},textColor:'#DDD'}});
+const candle = chart.addCandlestickSeries();
+const ema9 = chart.addLineSeries({color:'#FFD700'}); 
+const ema15 = chart.addLineSeries({color:'#00BFFF'});
+
+// Demo data
+let data=[]; let p=24500; for(let i=0;i<100;i++){p+=Math.random()*40-20; data.push({time:i,open:p,high:p+10,low:p-10,close:p})}
+candle.setData(data);
+const closes=data.map(d=>d.close);
+ema9.setData(technicalindicators.EMA.calculate({period:9,values:closes}).map((v,i)=>({time:i+8,value:v})));
+ema15.setData(technicalindicators.EMA.calculate({period:15,values:closes}).map((v,i)=>({time:i+14,value:v})));
 </script>
 </body>
 </html>
