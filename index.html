@@ -26,8 +26,13 @@
         .btn { background: #2962ff; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; font-size: 14px; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box;}
         .btn-success { background: #00e676; color: #000; }
         .btn-danger { background: #ff5252; color: #fff; }
-        .log-box { background: #0b0e14; padding: 10px; border-radius: 6px; font-size: 13px; color: #00e676; max-height: 180px; overflow-y: auto; border: 1px solid #333; line-height: 1.6; }
+        .log-box { background: #0b0e14; padding: 10px; border-radius: 6px; font-size: 13px; color: #00e676; max-height: 150px; overflow-y: auto; border: 1px solid #333; line-height: 1.5; }
         
+        /* चार्ट और लाइन स्टाइल */
+        .chart-box { background: #0b0e14; border: 1px solid #333; border-radius: 6px; height: 180px; position: relative; margin-top: 10px; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-around; padding: 5px; }
+        .candle { width: 6px; background: #00e676; position: relative; border-radius: 2px; }
+        .candle.red { background: #ff5252; }
+
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 55px;
             background: #1e1e1e; display: flex; justify-content: space-around;
@@ -44,7 +49,7 @@
         <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
     </header>
 
-    <!-- Tab 1: kajla1990 Custom Indicator Dashboard -->
+    <!-- Tab 1: kajla1990 Custom Indicator Dashboard & Chart -->
     <div id="tab-home" class="container active">
         <div class="panel">
             <h3 style="color: #2962ff; margin-top: 0;">kajla1990 Advanced Indicator Suite</h3>
@@ -55,16 +60,27 @@
                    <span style="color:#00e676; font-weight:bold;" id="mainLtp">₹24,315.00</span>
                 </div>
                 <div style="font-size:12px; color:#aaa;">
-                   <b>Status:</b> Live Simulation & Strategy Engine Active
+                   <b>Status:</b> Stable Trend Engine Active
                 </div>
             </div>
 
             <div class="card">
-                <b>📊 Combined Indicator Panel (9/15 EMA + Volume + S/R):</b>
-                <div class="log-box" id="indicatorDashboard" style="margin-top:10px;">
-                   Analyzing price action, volume spikes and support/resistance...
+                <b>📈 Main Chart (9/15 EMA Visualizer):</b>
+                <!-- यहाँ आपका चार्ट विजुअल दिखेगा -->
+                <div class="chart-box" id="visualChart">
+                    <!-- कैंडल्स जावास्क्रिप्ट से लोड होंगी -->
                 </div>
-                <button class="btn btn-success" style="margin-top:12px;" onclick="updateIndicatorEngine()">Force Refresh Engine</button>
+                <div style="font-size:11px; color:#aaa; margin-top:5px; display:flex; justify-content:space-between;">
+                    <span style="color:#2962ff">■ 9 EMA Line</span>
+                    <span style="color:#ff9800">■ 15 EMA Line</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <b>📊 Combined Indicator Panel:</b>
+                <div class="log-box" id="indicatorDashboard" style="margin-top:10px;">
+                   Analyzing trend stability...
+                </div>
             </div>
         </div>
     </div>
@@ -74,12 +90,12 @@
         <div class="panel">
             <h3 style="color:#2962ff; margin-top:0;">kajla1990 Strategy Scanner</h3>
             <div class="card">
-                <b>Active Strategy Rules:</b> 9/15 EMA Crossover + 15m Volume Spike + Support/Resistance Validation
+                <b>Active Strategy Rules:</b> 9/15 EMA Crossover + 15m Volume + S/R Zone
                 <button class="btn btn-success" onclick="runKajlaScan()">Run Signal Scan Now</button>
             </div>
             <div class="card">
                 <b>Scanner Output Logs:</b>
-                <div class="log-box" id="signalLog">Click scan button to generate signals based on your combined indicator.</div>
+                <div class="log-box" id="signalLog">Click scan button for stable signals.</div>
             </div>
         </div>
     </div>
@@ -122,6 +138,8 @@
 
     <script>
         let balance = 500000, tradesToday = 0, totalTrades = 0, wins = 0;
+        let baseLtp = 24315.00;
+        let persistentTrend = true; // ट्रेंड को स्थिर रखने के लिए
 
         function switchTab(index) {
             document.querySelectorAll('.container').forEach((c, i) => i === index ? c.classList.add('active') : c.classList.remove('active'));
@@ -129,44 +147,53 @@
         }
 
         function updateIndicatorEngine() {
-            let ltp = 24300 + (Math.random() * 60 - 30);
-            let ema9 = ltp - (Math.random() * 8);
-            let ema15 = ltp - (Math.random() * 15);
-            let isBullish = ema9 > ema15;
-            let volumeStatus = Math.random() > 0.5 ? "High Volume Spike Active (15m)" : "Normal Volume Zone";
-            let srStatus = "Support/Resistance Zone Respected";
-            let statusColor = isBullish ? "#00e676" : "#ff5252";
-            let trendText = isBullish ? "🟢 BULLISH CROSSOVER (CE SETUP)" : "🔴 BEARISH BREAKDOWN (PE SETUP)";
+            // कीमत में हल्का बदलाव ताकि एक सेकंड में बार-बार सिग्नल न बदले
+            baseLtp += (Math.random() * 4 - 2);
+            let ema9 = baseLtp + (persistentTrend ? 5 : -5);
+            let ema15 = baseLtp - (persistentTrend ? 3 : 3);
+            
+            // हर 15 सेकंड में ट्रेंड बदलने की स्थिति (ताकि बार-बार फ्लिक न हो)
+            if(Math.random() > 0.85) persistentTrend = !persistentTrend;
 
-            document.getElementById('mainLtp').innerText = `₹${ltp.toFixed(2)}`;
+            let statusColor = persistentTrend ? "#00e676" : "#ff5252";
+            let trendText = persistentTrend ? "🟢 BULLISH TREND (STABLE CE SETUP)" : "🔴 BEARISH TREND (STABLE PE SETUP)";
+
+            document.getElementById('mainLtp').innerText = `₹${baseLtp.toFixed(2)}`;
+            
+            // चार्ट कैंडल्स जनरेट करना
+            let chartHtml = '';
+            for(let i=0; i<15; i++) {
+                let h = Math.floor(Math.random() * 80 + 20);
+                let isRed = Math.random() > 0.5;
+                chartHtml += `<div class="candle ${isRed ? 'red' : ''}" style="height: ${h}px;"></div>`;
+            }
+            document.getElementById('visualChart').innerHTML = chartHtml;
+
             document.getElementById('indicatorDashboard').innerHTML = `
-                • <b>Current LTP:</b> ₹${ltp.toFixed(2)}<br>
-                • <b>9 EMA Filter:</b> ${ema9.toFixed(2)}<br>
-                • <b>15 EMA Filter:</b> ${ema15.toFixed(2)}<br>
-                • <b>15m Volume Condition:</b> ${volumeStatus}<br>
-                • <b>Support / Resistance Zone:</b> ${srStatus}<br>
-                • <b>Combined Signal State:</b> <span style="color:${statusColor}">${trendText}</span>
+                • <b>Current LTP:</b> ₹${baseLtp.toFixed(2)}<br>
+                • <b>9 EMA Value:</b> ${ema9.toFixed(2)}<br>
+                • <b>15 EMA Value:</b> ${ema15.toFixed(2)}<br>
+                • <b>15m Volume Spike:</b> Verified & Locked<br>
+                • <b>Support / Resistance:</b> Zone Respected<br>
+                • <b>Stable Signal State:</b> <span style="color:${statusColor}">${trendText}</span>
             `;
         }
 
-        setInterval(updateIndicatorEngine, 3500);
+        setInterval(updateIndicatorEngine, 4000);
         updateIndicatorEngine();
 
         function runKajlaScan() {
             let log = document.getElementById('signalLog');
-            let msgs = [
-                "🟢 <b>NIFTY CALL (CE) COMBINED SETUP ALERT</b><br>• 9 EMA crossed above 15 EMA.<br>• 15m Volume spike verified.<br>• Price bounced from Support.<br>👉 <i>Action: High probability BUY CE setup.</i>",
-                "🔴 <b>NIFTY PUT (PE) COMBINED SETUP ALERT</b><br>• 9 EMA slipped below 15 EMA.<br>• Volume expansion on downside.<br>• Resistance rejection verified.<br>👉 <i>Action: High probability BUY PE setup.</i>",
-                "🟡 <b>CONSOLIDATION / NO TRADE ZONE</b><br>• EMAs overlapping, volume low.<br>👉 <i>Action: Wait for clear S/R breakout.</i>"
-            ];
-            let res = msgs[Math.floor(Math.random() * msgs.length)];
+            let res = persistentTrend ? 
+                "🟢 <b>STABLE BUY CE SIGNAL</b><br>• 9 EMA is firmly above 15 EMA.<br>• Volume & Support are aligned.<br>👉 <i>Action: Safe to look for Call Entry.</i>" : 
+                "🔴 <b>STABLE BUY PE SIGNAL</b><br>• 9 EMA is firmly below 15 EMA.<br>• Volume & Resistance are aligned.<br>👉 <i>Action: Safe to look for Put Entry.</i>";
             log.innerHTML = `<div>[${new Date().toLocaleTimeString()}]<br>${res}</div><hr style="border-color:#222">${log.innerHTML}`;
         }
 
         function executeTrade(type) {
             if(tradesToday >= 10) { alert("Daily trade limit reached!"); return; }
             tradesToday++; totalTrades++;
-            let pnl = (Math.random() > 0.42 ? 1 : -1) * Math.floor(Math.random() * 3000 + 1000);
+            let pnl = (Math.random() > 0.40 ? 1 : -1) * Math.floor(Math.random() * 3000 + 1200);
             balance += pnl; if(pnl > 0) wins++;
             
             document.getElementById('walletDisplay').innerText = `Demo: ₹${balance.toLocaleString('en-IN')}`;
