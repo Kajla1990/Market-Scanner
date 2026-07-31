@@ -2,69 +2,63 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kajla Signal Pro</title>
+<title>Kajla Signal Pro - 1 Year</title>
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
 .header{padding:10px;background:#161a22;text-align:center;font-size:16px;font-weight:bold}
 #chart{width:100%; height:75vh}
-#signalBox{padding:15px;background:#161a22;font-size:22px;font-weight:bold;text-align:center}
+#signalBox{padding:15px;background:#161a22;font-size:22px;font-weight:bold;text-align:center;border-top:2px solid #22c55e}
 </style>
 </head>
 <body>
-<div class="header">Kajla Signal Pro - NIFTY</div>
+<div class="header">Kajla Signal Pro - NIFTY 1 YEAR</div>
 <div id="chart"></div>
 <div id="signalBox">WAIT</div>
 
 <script>
 const chart = LightweightCharts.createChart(document.getElementById('chart'), {
     layout: { background: { color: '#0b0e14' }, textColor: '#9ca3af' },
-    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
     width: window.innerWidth, height: window.innerHeight - 100
 });
 
-const candleSeries = chart.addCandlestickSeries({
-    upColor: '#26a69a', downColor: '#ef5350',
-    wickUpColor: '#26a69a', wickDownColor: '#ef5350',
-});
+const candleSeries = chart.addCandlestickSeries();
+const ema9Series = chart.addLineSeries({ color: '#facc15', lineWidth: 2 }); // पीली लाइन
+const ema21Series = chart.addLineSeries({ color: '#38bdf8', lineWidth: 2 }); // नीली लाइन
 
-// डेमो डेटा
+// 1 साल का डेमो डेटा ~ 250 trading days
 let rawData = [];
-let price = 24200;
-for(let i=0; i<200; i++){
-    price += (Math.random() - 0.5) * 35;
-    let o = price; let c = price + (Math.random() - 0.5) * 30;
-    let h = Math.max(o,c) + Math.random()*15; let l = Math.min(o,c) - Math.random()*15;
-    rawData.push({time: Math.floor(Date.now()/1000) - (200-i)*5*60, open: o, high: h, low: l, close: c})
+let price = 22000;
+for(let i=0; i<250; i++){
+    price += (Math.random() - 0.5) * 150; // बड़ा मूव
+    let o = price; let c = price + (Math.random() - 0.5) * 100;
+    let h = Math.max(o,c) + Math.random()*50; let l = Math.min(o,c) - Math.random()*50;
+    rawData.push({time: Math.floor(Date.now()/1000) - (250-i)*24*60*60, open: o, high: h, low: l, close: c})
 }
 candleSeries.setData(rawData);
 
-// EMA Function
+// EMA + Signal Function
 function calculateEMA(data, period){
     let k = 2 / (period + 1); let ema = [data[0].close];
     for(let i=1; i<data.length; i++){ ema.push(data[i].close * k + ema[i-1] * (1-k)); }
     return ema;
 }
 
-// Signal निकालो
-function getSignal(data){
-    let ema9 = calculateEMA(data, 9);
-    let ema21 = calculateEMA(data, 21);
-    let last = data.length-1;
+let ema9 = calculateEMA(rawData, 9);
+let ema21 = calculateEMA(rawData, 21);
 
-    if(ema9[last] > ema21[last]){
-        return {text: "BUY SIGNAL", color: "#22c55e"};
-    }
-    if(ema9[last] < ema21[last]){
-        return {text: "SELL SIGNAL", color: "#ef4444"};
-    }
-    return {text: "WAIT", color: "#f59e0b"};
-}
+// EMA लाइन चार्ट पे डालो
+ema9Series.setData(rawData.map((d,i)=>({time:d.time, value:ema9[i]})));
+ema21Series.setData(rawData.map((d,i)=>({time:d.time, value:ema21[i]})));
 
-let signal = getSignal(rawData);
-document.getElementById('signalBox').innerText = signal.text;
-document.getElementById('signalBox').style.color = signal.color;
+let last = rawData.length-1;
+let signalText = "WAIT"; let signalColor = "#f59e0b";
+if(ema9[last] > ema21[last]){ signalText = "BUY SIGNAL"; signalColor = "#22c55e"; }
+if(ema9[last] < ema21[last]){ signalText = "SELL SIGNAL"; signalColor = "#ef4444"; }
+
+document.getElementById('signalBox').innerText = signalText;
+document.getElementById('signalBox').style.color = signalColor;
+document.getElementById('signalBox').style.borderTopColor = signalColor;
 
 chart.timeScale().fitContent();
 </script>
