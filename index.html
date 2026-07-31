@@ -1,48 +1,268 @@
-<!-- पुराने कोड की जगह यह नया और अधिक मजबूत कोड उपयोग करें -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kajla1990 Terminal - Nifty 9/15 EMA Scanner</title>
+    <!-- ट्रेडिंगव्यू लाइटवेट चार्ट लाइब्रेरी -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            background-color: #181A21;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        .header-title {
+            color: #2979FF;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .header-balance {
+            color: #00E676;
+            font-size: 14px;
+        }
+        .chart-section {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .chart-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 10;
+            font-size: 12px;
+            pointer-events: none; /* ताकि यह चार्ट के इंटरैक्शन को ब्लॉक न करे */
+        }
+        #tv_chart_container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            background-color: #121212;
+        }
+        .footer {
+            background-color: #181A21;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #333;
+        }
+        .footer-item {
+            color: #888;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .footer-item.active {
+            color: #2979FF;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #2979FF; /* Blue */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -15px;
+            margin-left: -15px;
+            z-index: 20;
+            display: none; /* डिफ़ॉल्ट रूप से छिपा हुआ */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
 
-<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-<script type="text/javascript">
-    // सुनिश्चित करें कि यह HTML एलिमेंट मौजूद है और उसका आईडी 'tradingview_widget_container' है
-    if (document.getElementById('tradingview_widget_container')) {
-        new TradingView.widget({
-            "autosize": true,
-            // 'symbol' को सही करें। 'NSE:NIFTY50' के बजाय try करें:
-            "symbol": "NSE:NIFTY", 
-            "interval": "15", // आपका 15 मिनट का टाइमफ्रेम
-            "timezone": "Asia/Kolkata", // भारतीय टाइमजोन
-            "theme": "dark", // आपका डार्क थीम
-            "style": "1",
-            "locale": "en",
-            "toolbar_bg": "#181A21", // थोड़ा बेहतर डार्क टूलबार
-            "enable_publishing": false,
-            // यह सबसे महत्वपूर्ण हिस्सा है - कस्टम इंडिकेटर को जोड़ना
-            "studies": [
-                // उदाहरण: 9 EMA जोड़ना
-                {
-                    "id": "MASimple@tv-basicstudies",
-                    "inputs": {
-                        "length": 9,
-                        "source": "close"
-                    }
-                },
-                // उदाहरण: 15 EMA जोड़ना
-                {
-                    "id": "MASimple@tv-basicstudies",
-                    "inputs": {
-                        "length": 15,
-                        "source": "close"
-                    }
-                },
-                // यदि आपने अपना कस्टम इंडिकेटर (pine script) बनाया है और आपके पास उसका स्क्रिप्ट ID है:
-                // {
-                //    "id": "PUB;YOUR_CUSTOM_SCRIPT_ID_HERE@tv-basicstudies"
-                // }
-            ],
-            "hide_side_toolbar": false,
-            "allow_symbol_change": true,
-            "container_id": "tradingview_widget_container" // सुनिश्चित करें कि यह DIV आईडी से मेल खाता है
+    <div class="header">
+        <div class="header-title">kajla1990 🇮🇳 Terminal</div>
+        <div class="header-balance">Demo: ₹4,98,000</div>
+    </div>
+
+    <div class="chart-section">
+        <div class="chart-info">
+            NSE: NIFTY 50 | 15m | <span style="color: #FFA726;">EMA9</span> / <span style="color: #2979FF;">EMA15</span>
+        </div>
+        <div id="tv_chart_container"></div>
+        <div id="loadingSpinner" class="spinner"></div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-item active">Chart & Ind</div>
+        <div class="footer-item">Strategy</div>
+        <div class="footer-item">Paper Trade</div>
+        <div class="footer-item">Portfolio</div>
+    </div>
+
+    <script>
+        // चार्ट को इनिशियलाइज़ करना
+        const chartElement = document.getElementById('tv_chart_container');
+        const chart = LightweightCharts.createChart(chartElement, {
+            layout: {
+                backgroundColor: '#121212',
+                textColor: '#DDD',
+            },
+            grid: {
+                vertLines: { color: '#2B2B32' },
+                horzLines: { color: '#2B2B32' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: '#555',
+            },
+            timeScale: {
+                borderColor: '#555',
+                timeVisible: true,
+                secondsVisible: false,
+            },
+            // मोबाइल के लिए चार्ट को रिस्पॉन्सिव बनाना
+            width: chartElement.clientWidth,
+            height: chartElement.clientHeight
         });
-    } else {
-        console.error("TradingView container not found!");
-    }
-</script>
+
+        // सीरीज जोड़ना (Main Candle Series, EMA9, EMA15, Volume)
+        const mainSeries = chart.addCandlestickSeries({
+            upColor: '#00E676',
+            downColor: '#FF1744',
+            borderDownColor: '#FF1744',
+            borderUpColor: '#00E676',
+            wickDownColor: '#FF1744',
+            wickUpColor: '#00E676',
+        });
+
+        const ema9Series = chart.addLineSeries({ color: '#FFA726', lineWidth: 2, title: 'EMA 9' });
+        const ema15Series = chart.addLineSeries({ color: '#2979FF', lineWidth: 2, title: 'EMA 15' });
+
+        const volumeSeries = chart.addHistogramSeries({
+            color: '#26A69A',
+            priceFormat: { type: 'volume' },
+            priceScaleId: '', // इसे अलग स्केल पर रखने के लिए खाली छोड़ दें
+            scaleMargins: {
+                top: 0.8, // वॉल्यूम को चार्ट के निचले हिस्से में रखने के लिए
+                bottom: 0,
+            },
+        });
+
+        // विंडो बदलने पर चार्ट को रिसाइज करना
+        window.addEventListener('resize', () => {
+            chart.applyOptions({
+                width: chartElement.clientWidth,
+                height: chartElement.clientHeight
+            });
+        });
+
+        // फंक्शन: EMA कैलकुलेट करना
+        function calculateEMA(data, period) {
+            const k = 2 / (period + 1);
+            let emaArray = [];
+            // पहला EMA SMA के बराबर होता है
+            let firstSma = 0;
+            for (let i = 0; i < period; i++) {
+                firstSma += data[i].close;
+            }
+            let ema = firstSma / period;
+            emaArray.push({ time: data[period - 1].time, value: ema });
+
+            for (let i = period; i < data.length; i++) {
+                ema = (data[i].close - ema) * k + ema;
+                emaArray.push({ time: data[i].time, value: ema });
+            }
+            return emaArray;
+        }
+
+        // फंक्शन: डेटा लोड करना और इंडिकेटर प्लॉट करना (सिम्युलेटेड)
+        async function loadAndPlotChart() {
+            const spinner = document.getElementById('loadingSpinner');
+            spinner.style.display = 'block';
+
+            try {
+                // 1. यथार्थवादी डमी डेटा (NIFTY 15-मिनट) प्राप्त करना
+                // वास्तविक उपयोग में, आप यहाँ fetch('YOUR_KOTAK_API_URL') का उपयोग करेंगे
+                const dummyData = await fetchDummyNiftyData();
+
+                // 2. डेटा को सीरीज में सेट करना
+                mainSeries.setData(dummyData);
+
+                // 3. वॉल्यूम डेटा तैयार करना और सेट करना
+                const volumeData = dummyData.map(item => ({
+                    time: item.time,
+                    value: item.volume,
+                    color: item.close > item.open ? '#00E676' : '#FF1744'
+                }));
+                volumeSeries.setData(volumeData);
+
+                // 4. EMA कैलकुलेट करना और प्लॉट करना
+                const ema9Data = calculateEMA(dummyData, 9);
+                const ema15Data = calculateEMA(dummyData, 15);
+                ema9Series.setData(ema9Data);
+                ema15Series.setData(ema15Data);
+
+                console.log("Chart plotted with 9/15 EMA and Volume.");
+
+            } catch (error) {
+                console.error("Error plotting chart:", error);
+                document.querySelector('.chart-info').innerHTML = "Error loading chart data. Check console.";
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+
+        // सहायक फंक्शन: यथार्थवादी डमी डेटा उत्पन्न करने के लिए (केवल परीक्षण के लिए)
+        function fetchDummyNiftyData() {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    let data = [];
+                    let time = Math.floor(Date.now() / 1000) - (100 * 15 * 60); // 100 कैंडल्स 15-मिनट पहले
+                    let close = 24315; // शुरुआती कीमत
+                    for (let i = 0; i < 100; i++) {
+                        let open = close + (Math.random() - 0.5) * 50;
+                        high = Math.max(open, close) + Math.random() * 40;
+                        low = Math.min(open, close) - Math.random() * 40;
+                        close = close + (Math.random() - 0.5) * 70;
+                        volume = Math.random() * 5000000 + 1000000;
+                        
+                        data.push({
+                            time: time + (i * 15 * 60),
+                            open: parseFloat(open.toFixed(2)),
+                            high: parseFloat(high.toFixed(2)),
+                            low: parseFloat(low.toFixed(2)),
+                            close: parseFloat(close.toFixed(2)),
+                            volume: parseFloat(volume.toFixed(2))
+                        });
+                    }
+                    resolve(data);
+                }, 1500); // 1.5 सेकंड का नेटवर्क सिम्युलेशन
+            });
+        }
+
+        // चार्ट लोड करें
+        loadAndPlotChart();
+
+    </script>
+
+</body>
+</html>
