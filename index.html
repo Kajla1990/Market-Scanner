@@ -5,15 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kajla Terminal Pro</title>
 
-<!-- FIX: Version 4.2.0 use karo. Ye stable hai -->
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
-<script src="https://unpkg.com/technicalindicators@3.1.0/dist/browser.js"></script>
 
 <style>
   body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
-  .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
+ .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
   #chart{width:100%; height:calc(100vh - 50px)}
-  .error{color:red; padding:20px}
 </style>
 </head>
 <body>
@@ -24,59 +21,63 @@
 <div id="chart"></div>
 
 <script>
+// खुद का EMA function - Library की जरूरत नहीं
+function calculateEMA(data, period) {
+    const k = 2 / (period + 1);
+    let emaArray = [];
+    let ema = data[0];
+    for (let i = 0; i < data.length; i++) {
+        ema = data[i] * k + ema * (1 - k);
+        if(i >= period - 1) { // पहले period-1 values skip
+            emaArray.push(ema);
+        }
+    }
+    return emaArray;
+}
+
 window.onload = function() {
-  try {
-      // FIX: createChart ke baad check
-      if(typeof LightweightCharts === 'undefined'){
-          throw new Error("Chart library load nahi hui. Internet check karo");
-      }
+    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        layout: { background: { color: '#0b0e14' }, textColor: '#DDD' },
+        grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
+    });
 
-      const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-          layout: { background: { color: '#0b0e14' }, textColor: '#DDD' },
-          grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
-      });
+    const candleSeries = chart.addCandlestickSeries({
+        upColor: '#22c55e', downColor: '#ef4444',
+        wickUpColor: '#22c55e', wickDownColor: '#ef4444'
+    });
+    
+    const ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: 'EMA 9' });
+    const ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, title: 'EMA 15' });
 
-      // FIX: Ye line error de rahi thi
-      const candleSeries = chart.addCandlestickSeries({
-          upColor: '#22c55e', downColor: '#ef4444',
-          wickUpColor: '#22c55e', wickDownColor: '#ef4444'
-      });
-      
-      const ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: 'EMA 9' });
-      const ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, title: 'EMA 15' });
+    // DEMO DATA
+    function generateData() {
+        const data = [];
+        let price = 24500;
+        for(let i = 0; i < 200; i++){
+            price += (Math.random() - 0.5) * 40;
+            data.push({
+                time: Math.floor(Date.now()/1000) - (200-i)*15*60,
+                open: price, high: price + 25, low: price - 25, close: price
+            })
+        }
+        return data;
+    }
 
-      // DEMO DATA
-      function generateData() {
-          const data = [];
-          let price = 24500;
-          for(let i = 0; i < 200; i++){
-              price += (Math.random() - 0.5) * 40;
-              data.push({
-                  time: Math.floor(Date.now()/1000) - (200-i)*15*60,
-                  open: price, high: price + 25, low: price - 25, close: price
-              })
-          }
-          return data;
-      }
+    const candleData = generateData();
+    candleSeries.setData(candleData);
 
-      const candleData = generateData();
-      candleSeries.setData(candleData);
-
-      const closes = candleData.map(c => c.close);
-      
-      const ema9 = technicalindicators.ema({period: 9, values: closes});
-      const ema9Data = ema9.map((val, i) => ({ time: candleData[i+8].time, value: val }));
-      ema9Series.setData(ema9Data);
-      
-      const ema15 = technicalindicators.ema({period: 15, values: closes});
-      const ema15Data = ema15.map((val, i) => ({ time: candleData[i+14].time, value: val }));
-      ema15Series.setData(ema15Data);
-      
-      chart.timeScale().fitContent();
-
-  } catch(e) {
-      document.getElementById('chart').innerHTML = "<div class='error'>Error: " + e.message + "</div>";
-  }
+    const closes = candleData.map(c => c.close);
+    
+    // EMA Calculate
+    const ema9 = calculateEMA(closes, 9);
+    const ema9Data = ema9.map((val, i) => ({ time: candleData[i+8].time, value: val }));
+    ema9Series.setData(ema9Data);
+    
+    const ema15 = calculateEMA(closes, 15);
+    const ema15Data = ema15.map((val, i) => ({ time: candleData[i+14].time, value: val }));
+    ema15Series.setData(ema15Data);
+    
+    chart.timeScale().fitContent();
 }
 </script>
 </body>
