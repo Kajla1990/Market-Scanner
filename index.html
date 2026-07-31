@@ -2,20 +2,18 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>KSP v5.1 Mobile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KSP v5.1 - Multi Market</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI'; background: #0d1117; color: #c9d1d9; padding: 10px; }
     .header { background: linear-gradient(90deg, #238636, #1f6feb); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 10px; }
     .header h2 { font-size: 18px; color: white; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 12px; margin: 8px 0; }
-    .btn { width: 100%; background: #238636; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
-    .btn:active { background: #2ea043; }
+    .btn { width: 100%; background: #238636; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; }
     .buy { color: #3fb950; font-size: 20px; font-weight: bold; }
     .sell { color: #f85149; font-size: 20px; font-weight: bold; }
     .wait { color: #d29922; font-size: 18px; font-weight: bold; }
-    .error { color: #f85149; }
     select { width: 100%; padding: 10px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; }
     #output { font-size: 15px; line-height: 1.8; }
     .time { font-size: 12px; color: #8b949e; text-align: center; }
@@ -24,16 +22,18 @@
 <body>
 
 <div class="header">
-    <h2>🔥 KSP v5.1 - 88% Sniper</h2>
+    <h2>🔥 KSP v5.1 - Multi Market</h2>
     <div class="time" id="liveTime"></div>
 </div>
 
 <div class="card">
-    <label>Symbol</label>
-    <select id="symbol">
-        <option>NIFTY 50</option>
-        <option>BANKNIFTY</option>
-        <option>SENSEX</option>
+    <label>Market Select करो</label>
+    <select id="market" onchange="changeMarket()">
+        <option value="nifty">NIFTY 50 - India</option>
+        <option value="banknifty">BANKNIFTY - India</option>
+        <option value="forex">EURUSD - Forex</option>
+        <option value="gold">GOLD - Forex</option>
+        <option value="crypto">BTCUSD - Crypto</option>
     </select>
     
     <label style="margin-top:10px; display:block;">Timeframe</label>
@@ -49,86 +49,70 @@
     <div id="output">⏳ Button दबाओ...</div>
 </div>
 
-<div class="card" style="font-size:12px;">
-    <b>Rules:</b> 9:30-2:30 | Thu 1:30 Lock | ADX 3 Candle | 9/11 Confluence
-</div>
-
 <audio id="alertSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
 
 <script>
-// Live Time Update
+// ========== SETTINGS ==========
+const FINNHUB_KEY = "demo"; // finnhub.io से free key
+const TWELVEDATA_KEY = "demo"; // twelvedata.com से free key
+
+let CURRENT_MARKET = "nifty";
+
 function updateTime() {
     document.getElementById("liveTime").innerText = "IST: " + new Date().toLocaleTimeString();
 }
 setInterval(updateTime, 1000);
 updateTime();
 
-function vibrate() {
-    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+function vibrate() { if(navigator.vibrate) navigator.vibrate([200, 100, 200]); }
+function playSound() { document.getElementById("alertSound").play(); }
+
+function changeMarket() {
+    CURRENT_MARKET = document.getElementById("market").value;
 }
 
-function playSound() {
-    document.getElementById("alertSound").play();
+// ========== LIVE DATA FUNCTION ==========
+async function getLivePrice(market) {
+    try {
+        if(market == "nifty") {
+            let res = await fetch(`https://finnhub.io/api/v1/quote?symbol=NSE:NIFTY 50&token=${FINNHUB_KEY}`);
+            let data = await res.json();
+            return data.c;
+        }
+        if(market == "banknifty") {
+            let res = await fetch(`https://finnhub.io/api/v1/quote?symbol=NSE:NIFTY BANK&token=${FINNHUB_KEY}`);
+            let data = await res.json();
+            return data.c;
+        }
+        if(market == "forex" || market == "gold") {
+            let symbol = market == "forex" ? "EUR/USD" : "XAU/USD";
+            let res = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`);
+            let data = await res.json();
+            return parseFloat(data.price);
+        }
+        if(market == "crypto") {
+            let res = await fetch(`https://finnhub.io/api/v1/quote?symbol=BINANCE:BTCUSDT&token=${FINNHUB_KEY}`);
+            let data = await res.json();
+            return data.c;
+        }
+    } catch(e) {
+        return 0;
+    }
 }
 
-function checkSignal() {
+// ========== MAIN SIGNAL FUNCTION ==========
+async function checkSignal() {
     const now = new Date();
     let h = now.getHours();
     let m = now.getMinutes();
     let day = now.getDay();
     let out = document.getElementById("output");
     
-    // Time Check
-    if(h < 9 || (h==9 && m<30) || h>14 || (h==14 && m>30)) {
-        out.innerHTML = `<span class="error">❌ Market Band</span><br>Time: 9:30 AM - 2:30 PM<br>Current: ${h}:${m}`;
+    // NIFTY/BANKNIFTY के लिए ही Time Filter
+    if((CURRENT_MARKET=="nifty" || CURRENT_MARKET=="banknifty") && 
+       (h < 9 || (h==9 && m<30) || h>14 || (h==14 && m>30))) {
+        out.innerHTML = `<span style="color:#f85149">❌ Market Band</span><br>Indian Market: 9:30 AM - 2:30 PM`;
         return;
     }
     
-    // Expiry Lock
-    if(day == 4 && (h>13 || (h==13 && m>=30))) {
-        out.innerHTML = `<span class="error">❌ Expiry Lock ON</span><br>Thursday 1:30 ke baad nayi trade nahi`;
-        return;
-    }
-    
-    // Demo Signal Logic - yaha tu apna calculation dalna
-    let r = Math.random();
-    let con = Math.floor(Math.random()*3)+9;
-    let entry = (24000 + Math.random()*500).toFixed(2);
-    let sl = (entry-25).toFixed(2);
-    
-    if(r > 0.6 && con >=9) {
-        playSound(); vibrate();
-        out.innerHTML = `<span class="buy">🟢 BUY SIGNAL</span><br><br>
-        Confluence: ${con}/11 ✅<br>
-        Entry: ${entry}<br>
-        SL: ${sl}<br>
-        TP1: ${(parseFloat(entry)+25).toFixed(2)}<br>
-        TP2: ${(parseFloat(entry)+50).toFixed(2)}<br>
-        TP3: ${(parseFloat(entry)+75).toFixed(2)}<br><br>
-        Time: ${now.toLocaleTimeString()}`;
-    }
-    else if(r < 0.3 && con >=9) {
-        playSound(); vibrate();
-        out.innerHTML = `<span class="sell">🔴 SELL SIGNAL</span><br><br>
-        Confluence: ${con}/11 ✅<br>
-        Entry: ${entry}<br>
-        SL: ${(parseFloat(entry)+25).toFixed(2)}<br>
-        TP1: ${(entry-25).toFixed(2)}<br>
-        TP2: ${(entry-50).toFixed(2)}<br>
-        TP3: ${(entry-75).toFixed(2)}<br><br>
-        Time: ${now.toLocaleTimeString()}`;
-    }
-    else {
-        out.innerHTML = `<span class="wait">⏳ WAIT</span><br><br>
-        9/11 Confluence nahi bana<br>
-        Agla 5min candle check karo<br><br>
-        Time: ${now.toLocaleTimeString()}`;
-    }
-}
-
-// Auto check har 1 min
-setInterval(checkSignal, 60000);
-</script>
-
-</body>
-</html>
+   
