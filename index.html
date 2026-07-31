@@ -2,54 +2,71 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Market Scanner with Indicators</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<title>Kajla Terminal - Fixed</title>
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/technicalindicators@3.1.0/dist/browser.js"></script>
 <style>
-  body { background:#0e1117; color:#fff; font-family:sans-serif; padding:20px; }
-  canvas { background:#161a22; border-radius:10px; }
+  body { margin:0; background:#0e1117; color:#fff; font-family:sans-serif; }
+  #chart { width:100%; height:90vh; }
+  .header { padding:10px; background:#161a22; font-size:14px; color:#4ade80; }
 </style>
 </head>
 <body>
-<h2>📈 Market Scanner - EMA + RSI</h2>
-<canvas id="priceChart" height="120"></canvas>
-<canvas id="rsiChart" height="60"></canvas>
+<div class="header">kajla1990 Terminal | NSE: NIFTY 50 | 15m | 9/15 EMA Active | Demo: ₹4,98,000</div>
+<div id="chart"></div>
 
 <script>
-// 1. Sample OHLCV data - replace this with your API data
-const data = {
-  labels: ["Day1","Day2","Day3","Day4","Day5","Day6","Day7","Day8","Day9","Day10","Day11","Day12","Day13","Day14","Day15","Day16","Day17","Day18","Day19","Day20"],
-  close:  [100,102,101,103,105,107,106,108,110,109,111,113,112,114,115,117,116,118,120,119],
-  high:   [101,103,102,104,106,108,107,109,111,110,112,114,113,115,116,118,117,119,121,120],
-  low:    [99,101,100,102,104,106,105,107,109,108,110,112,111,113,114,116,115,117,119,118],
-  open:   [100,101,102,101,103,105,107,106,108,110,109,111,113,112,114,115,117,116,118,120],
-  volume: [1200,1300,1250,1400,1500,1600,1550,1700,1800,1750,1900,2000,1950,2100,2200,2300,2250,2400,2500,2450]
-};
+const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    layout: { background: { color: '#0e1117' }, textColor: '#DDD' },
+    grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } },
+    timeScale: { timeVisible: true },
+});
 
-// 2. Calculate Indicators - NO ERROR if data < period
-const EMA = technicalindicators.EMA.calculate({period: 20, values: data.close});
-const RSI = technicalindicators.RSI.calculate({period: 14, values: data.close});
+const candleSeries = chart.addCandlestickSeries();
+const ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: 'EMA 9' });
+const ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, title: 'EMA 15' });
 
-// Pad with nulls so arrays match label length. Chart.js needs same length
-const emaPadded = Array(data.close.length - EMA.length).fill(null).concat(EMA);
-const rsiPadded = Array(data.close.length - RSI.length).fill(null).concat(RSI);
+// --- IMPORTANT: Yaha apna data API daalo ---
+// Abhi demo data hai. Isko apne scanner ke /api/data se replace karna
+function getDemoData() {
+    const data = [];
+    let price = 24500;
+    for(let i = 0; i < 200; i++){
+        price += (Math.random() - 0.5) * 50;
+        data.push({
+            time: new Date(Date.now() - (200-i)*15*60*1000).getTime()/1000,
+            open: price,
+            high: price + 20,
+            low: price - 20,
+            close: price + (Math.random() - 0.5) * 10
+        })
+    }
+    return data;
+}
 
-// 3. Price Chart with EMA
-const priceCtx = document.getElementById('priceChart').getContext('2d');
-new Chart(priceCtx, {
-  type: 'line',
-  data: {
-    labels: data.labels,
-    datasets: [
-      {
-        label: 'Close Price',
-        data: data.close,
-        borderColor: '#4ade80',
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.1
-      },
-      {
-        label: 'EMA 20',
-        data: emaPadded,
-        borderColor: '#facc
+function updateChart() {
+    const candleData = getDemoData(); // <-- yaha fetch('/api/candles') lagao
+    
+    candleSeries.setData(candleData);
+    
+    const closes = candleData.map(c => c.close);
+    
+    // EMA 9
+    const ema9 = technicalindicators.EMA.calculate({period: 9, values: closes});
+    const ema9Data = ema9.map((val, i) => ({ time: candleData[i+8].time, value: val }));
+    ema9Series.setData(ema9Data);
+    
+    // EMA 15
+    const ema15 = technicalindicators.EMA.calculate({period: 15, values: closes});
+    const ema15Data = ema15.map((val, i) => ({ time: candleData[i+14].time, value: val }));
+    ema15Series.setData(ema15Data);
+    
+    chart.timeScale().fitContent();
+}
+
+// Pehli baar chalao + har 15 sec me update karo
+updateChart();
+setInterval(updateChart, 15000); 
+</script>
+</body>
+</html>
