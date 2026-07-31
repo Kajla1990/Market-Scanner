@@ -2,21 +2,24 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>KSP v5.1 - Multi Market</title>
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI'; background: #0d1117; color: #c9d1d9; padding: 10px; }
-    .header { background: linear-gradient(90deg, #238636, #1f6feb); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 10px; }
-    .header h2 { font-size: 18px; color: white; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 12px; margin: 8px 0; }
-    .btn { width: 100%; background: #238636; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, 'Segoe UI'; background: #0d1117; color: #c9d1d9; padding: 10px; }
+    .header { background: linear-gradient(90deg, #238636, #1f6feb); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(35,134,54,0.3); }
+    .header h2 { font-size: 18px; color: white; font-weight: 700; }
+    .time { font-size: 12px; color: #ffffffcc; margin-top: 4px; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px; margin: 10px 0; }
+    .card-title { font-size: 13px; color: #8b949e; margin-bottom: 8px; font-weight: 600; }
+    .btn { width: 100%; background: #238636; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn:active { background: #2ea043; transform: scale(0.98); }
     .buy { color: #3fb950; font-size: 20px; font-weight: bold; }
     .sell { color: #f85149; font-size: 20px; font-weight: bold; }
     .wait { color: #d29922; font-size: 18px; font-weight: bold; }
-    select { width: 100%; padding: 10px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; }
-    #output { font-size: 15px; line-height: 1.8; }
-    .time { font-size: 12px; color: #8b949e; text-align: center; }
+    select { width: 100%; padding: 12px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px; font-size: 15px; }
+    #output { font-size: 15px; line-height: 1.9; min-height: 120px; }
+    .footer { text-align: center; font-size: 11px; color: #484f58; margin-top: 15px; }
 </style>
 </head>
 <body>
@@ -27,92 +30,34 @@
 </div>
 
 <div class="card">
-    <label>Market Select करो</label>
+    <div class="card-title">1. MARKET SELECT करो</div>
     <select id="market" onchange="changeMarket()">
         <option value="nifty">NIFTY 50 - India</option>
         <option value="banknifty">BANKNIFTY - India</option>
         <option value="forex">EURUSD - Forex</option>
-        <option value="gold">GOLD - Forex</option>
-        <option value="crypto">BTCUSD - Crypto</option>
+        <option value="gold">GOLD XAUUSD - Forex</option>
+        <option value="crypto">BTCUSD - Crypto 24x7</option>
     </select>
     
-    <label style="margin-top:10px; display:block;">Timeframe</label>
+    <div class="card-title" style="margin-top:12px;">2. TIMEFRAME</div>
     <select id="tf">
         <option>5min</option>
         <option>15min</option>
     </select>
     
-    <button class="btn" onclick="checkSignal()" style="margin-top:12px;">SIGNAL CHECK करो</button>
+    <button class="btn" onclick="checkSignal()" style="margin-top:15px;">🚨 SIGNAL CHECK करो</button>
 </div>
 
 <div class="card">
-    <div id="output">⏳ Button दबाओ...</div>
+    <div class="card-title">3. LIVE SIGNAL</div>
+    <div id="output">⏳ Button दबाओ या 1.5 sec wait करो...</div>
 </div>
 
-<audio id="alertSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+<div class="footer">KSP v5.1 | Auto Check: 1.5 Second | Made for Mobile</div>
+
+<audio id="alertSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
 
 <script>
-// ========== SETTINGS ==========
-const FINNHUB_KEY = "demo"; // finnhub.io से free key
-const TWELVEDATA_KEY = "demo"; // twelvedata.com से free key
-
-let CURRENT_MARKET = "nifty";
-
-function updateTime() {
-    document.getElementById("liveTime").innerText = "IST: " + new Date().toLocaleTimeString();
-}
-setInterval(updateTime, 1000);
-updateTime();
-
-function vibrate() { if(navigator.vibrate) navigator.vibrate([200, 100, 200]); }
-function playSound() { document.getElementById("alertSound").play(); }
-
-function changeMarket() {
-    CURRENT_MARKET = document.getElementById("market").value;
-}
-
-// ========== LIVE DATA FUNCTION ==========
-async function getLivePrice(market) {
-    try {
-        if(market == "nifty") {
-            let res = await fetch(`https://finnhub.io/api/v1/quote?symbol=NSE:NIFTY 50&token=${FINNHUB_KEY}`);
-            let data = await res.json();
-            return data.c;
-        }
-        if(market == "banknifty") {
-            let res = await fetch(`https://finnhub.io/api/v1/quote?symbol=NSE:NIFTY BANK&token=${FINNHUB_KEY}`);
-            let data = await res.json();
-            return data.c;
-        }
-        if(market == "forex" || market == "gold") {
-            let symbol = market == "forex" ? "EUR/USD" : "XAU/USD";
-            let res = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`);
-            let data = await res.json();
-            return parseFloat(data.price);
-        }
-        if(market == "crypto") {
-            let res = await fetch(`https://finnhub.io/api/v1/quote?symbol=BINANCE:BTCUSDT&token=${FINNHUB_KEY}`);
-            let data = await res.json();
-            return data.c;
-        }
-    } catch(e) {
-        return 0;
-    }
-}
-
-// ========== MAIN SIGNAL FUNCTION ==========
-async function checkSignal() {
-    const now = new Date();
-    let h = now.getHours();
-    let m = now.getMinutes();
-    let day = now.getDay();
-    let out = document.getElementById("output");
-    
-    // NIFTY/BANKNIFTY के लिए ही Time Filter
-    if((CURRENT_MARKET=="nifty" || CURRENT_MARKET=="banknifty") && 
-       (h < 9 || (h==9 && m<30) || h>14 || (h==14 && m>30))) {
-        out.innerHTML = `<span style="color:#f85149">❌ Market Band</span><br>Indian Market: 9:30 AM - 2:30 PM`;
-        return;
-    }
-    
-   
+// ========== STEP 1: YAHAN APNI API KEY DALO ==========
+const FINNHUB_KEY = "demo"; // https://finnhub.io se free key lo
+const TWELVEDATA_KEY = "demo"; // https://twelvedata.com se free key lo
