@@ -21,8 +21,6 @@
         .container { height: calc(100vh - 87px); width: 100%; display: none; box-sizing: border-box; }
         .container.active { display: block; }
         
-        .chart-frame { width: 100%; height: 100%; border: none; background: #121212; }
-        
         .panel { padding: 12px; height: 100%; overflow-y: auto; background: #121212; box-sizing: border-box; }
         .card { background: #1e1e1e; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
         .btn { background: #2962ff; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; font-size: 14px; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box;}
@@ -46,9 +44,27 @@
         <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
     </header>
 
-    <!-- Tab 1: Direct TradingView Advanced Web Chart Frame -->
+    <!-- Tab 1: TradingView Advanced Chart Widget (Error-Free Official Integration) -->
     <div id="tab-home" class="container active">
-        <iframe class="chart-frame" src="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY"></iframe>
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+            {
+                "autosize": true,
+                "symbol": "NSE:NIFTY",
+                "interval": "15",
+                "timezone": "Asia/Kolkata",
+                "theme": "dark",
+                "style": "1",
+                "locale": "in",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "allow_symbol_change": true,
+                "calendar": false,
+                "support_host": "https://www.tradingview.com"
+            }
+            </script>
+        </div>
     </div>
 
     <!-- Tab 2: kajla1990 Custom Strategy Engine -->
