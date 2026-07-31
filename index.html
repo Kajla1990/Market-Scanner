@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kajla1990 Terminal - Nifty 9/15 EMA Scanner</title>
-    <!-- ट्रेडिंगव्यू लाइटवेट चार्ट लाइब्रेरी -->
+    <title>Kajla1990 Terminal - Market Scanner</title>
+    <!-- Lightweight Charts Library -->
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #121212;
             color: #ffffff;
             margin: 0;
@@ -16,10 +16,11 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow: hidden;
         }
         .header {
             background-color: #181A21;
-            padding: 10px 15px;
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -34,28 +35,10 @@
             color: #00E676;
             font-size: 14px;
         }
-        .chart-section {
-            flex: 1;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-        .chart-info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 5px 10px;
-            border-radius: 4px;
-            z-index: 10;
-            font-size: 12px;
-            pointer-events: none; /* ताकि यह चार्ट के इंटरैक्शन को ब्लॉक न करे */
-        }
-        #tv_chart_container {
+        .chart-container {
             flex: 1;
             width: 100%;
-            height: 100%;
-            background-color: #121212;
+            position: relative;
         }
         .footer {
             background-color: #181A21;
@@ -68,29 +51,9 @@
             color: #888;
             font-size: 12px;
             text-align: center;
-            cursor: pointer;
         }
         .footer-item.active {
             color: #2979FF;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3; /* Light grey */
-            border-top: 4px solid #2979FF; /* Blue */
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            margin-top: -15px;
-            margin-left: -15px;
-            z-index: 20;
-            display: none; /* डिफ़ॉल्ट रूप से छिपा हुआ */
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -101,13 +64,7 @@
         <div class="header-balance">Demo: ₹4,98,000</div>
     </div>
 
-    <div class="chart-section">
-        <div class="chart-info">
-            NSE: NIFTY 50 | 15m | <span style="color: #FFA726;">EMA9</span> / <span style="color: #2979FF;">EMA15</span>
-        </div>
-        <div id="tv_chart_container"></div>
-        <div id="loadingSpinner" class="spinner"></div>
-    </div>
+    <div id="chart" class="chart-container"></div>
 
     <div class="footer">
         <div class="footer-item active">Chart & Ind</div>
@@ -117,151 +74,65 @@
     </div>
 
     <script>
-        // चार्ट को इनिशियलाइज़ करना
-        const chartElement = document.getElementById('tv_chart_container');
-        const chart = LightweightCharts.createChart(chartElement, {
+        // सुरक्षित तरीके से चार्ट इनिशियलाइज़ करना
+        const chartDom = document.getElementById('chart');
+        
+        const chart = LightweightCharts.createChart(chartDom, {
+            width: chartDom.clientWidth,
+            height: chartDom.clientHeight,
             layout: {
                 backgroundColor: '#121212',
-                textColor: '#DDD',
+                textColor: '#d1d4dc',
             },
             grid: {
-                vertLines: { color: '#2B2B32' },
-                horzLines: { color: '#2B2B32' },
-            },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-            },
-            rightPriceScale: {
-                borderColor: '#555',
+                vertLines: { color: '#2b2b43' },
+                horzLines: { color: '#2b2b43' },
             },
             timeScale: {
-                borderColor: '#555',
                 timeVisible: true,
-                secondsVisible: false,
             },
-            // मोबाइल के लिए चार्ट को रिस्पॉन्सिव बनाना
-            width: chartElement.clientWidth,
-            height: chartElement.clientHeight
         });
 
-        // सीरीज जोड़ना (Main Candle Series, EMA9, EMA15, Volume)
-        const mainSeries = chart.addCandlestickSeries({
+        // कैंडल्स की सीरीज जोड़ना
+        const candlestickSeries = chart.addCandlestickSeries({
             upColor: '#00E676',
             downColor: '#FF1744',
-            borderDownColor: '#FF1744',
-            borderUpColor: '#00E676',
-            wickDownColor: '#FF1744',
+            borderVisible: false,
             wickUpColor: '#00E676',
+            wickDownColor: '#FF1744',
         });
 
-        const ema9Series = chart.addLineSeries({ color: '#FFA726', lineWidth: 2, title: 'EMA 9' });
-        const ema15Series = chart.addLineSeries({ color: '#2979FF', lineWidth: 2, title: 'EMA 15' });
+        // डमी डेटा जनरेट करके चार्ट पर डालना ताकि सफेद स्क्रीन न आए
+        function loadDefaultData() {
+            let data = [];
+            let time = Math.floor(Date.now() / 1000) - (50 * 900); // 15 मिनट पीछे से
+            let price = 24315;
 
-        const volumeSeries = chart.addHistogramSeries({
-            color: '#26A69A',
-            priceFormat: { type: 'volume' },
-            priceScaleId: '', // इसे अलग स्केल पर रखने के लिए खाली छोड़ दें
-            scaleMargins: {
-                top: 0.8, // वॉल्यूम को चार्ट के निचले हिस्से में रखने के लिए
-                bottom: 0,
-            },
-        });
+            for (let i = 0; i < 50; i++) {
+                let change = (Math.random() - 0.48) * 40;
+                let open = price;
+                let close = open + change;
+                let high = Math.max(open, close) + Math.random() * 20;
+                let low = Math.min(open, close) - Math.random() * 20;
+                
+                data.push({
+                    time: time + (i * 900),
+                    open: parseFloat(open.toFixed(2)),
+                    high: parseFloat(high.toFixed(2)),
+                    low: parseFloat(low.toFixed(2)),
+                    close: parseFloat(close.toFixed(2))
+                });
+                price = close;
+            }
+            candlestickSeries.setData(data);
+        }
 
-        // विंडो बदलने पर चार्ट को रिसाइज करना
+        loadDefaultData();
+
+        // स्क्रीन साइज बदलने पर चार्ट को ऑटो-एडजस्ट करना
         window.addEventListener('resize', () => {
-            chart.applyOptions({
-                width: chartElement.clientWidth,
-                height: chartElement.clientHeight
-            });
+            chart.resize(chartDom.clientWidth, chartDom.clientHeight);
         });
-
-        // फंक्शन: EMA कैलकुलेट करना
-        function calculateEMA(data, period) {
-            const k = 2 / (period + 1);
-            let emaArray = [];
-            // पहला EMA SMA के बराबर होता है
-            let firstSma = 0;
-            for (let i = 0; i < period; i++) {
-                firstSma += data[i].close;
-            }
-            let ema = firstSma / period;
-            emaArray.push({ time: data[period - 1].time, value: ema });
-
-            for (let i = period; i < data.length; i++) {
-                ema = (data[i].close - ema) * k + ema;
-                emaArray.push({ time: data[i].time, value: ema });
-            }
-            return emaArray;
-        }
-
-        // फंक्शन: डेटा लोड करना और इंडिकेटर प्लॉट करना (सिम्युलेटेड)
-        async function loadAndPlotChart() {
-            const spinner = document.getElementById('loadingSpinner');
-            spinner.style.display = 'block';
-
-            try {
-                // 1. यथार्थवादी डमी डेटा (NIFTY 15-मिनट) प्राप्त करना
-                // वास्तविक उपयोग में, आप यहाँ fetch('YOUR_KOTAK_API_URL') का उपयोग करेंगे
-                const dummyData = await fetchDummyNiftyData();
-
-                // 2. डेटा को सीरीज में सेट करना
-                mainSeries.setData(dummyData);
-
-                // 3. वॉल्यूम डेटा तैयार करना और सेट करना
-                const volumeData = dummyData.map(item => ({
-                    time: item.time,
-                    value: item.volume,
-                    color: item.close > item.open ? '#00E676' : '#FF1744'
-                }));
-                volumeSeries.setData(volumeData);
-
-                // 4. EMA कैलकुलेट करना और प्लॉट करना
-                const ema9Data = calculateEMA(dummyData, 9);
-                const ema15Data = calculateEMA(dummyData, 15);
-                ema9Series.setData(ema9Data);
-                ema15Series.setData(ema15Data);
-
-                console.log("Chart plotted with 9/15 EMA and Volume.");
-
-            } catch (error) {
-                console.error("Error plotting chart:", error);
-                document.querySelector('.chart-info').innerHTML = "Error loading chart data. Check console.";
-            } finally {
-                spinner.style.display = 'none';
-            }
-        }
-
-        // सहायक फंक्शन: यथार्थवादी डमी डेटा उत्पन्न करने के लिए (केवल परीक्षण के लिए)
-        function fetchDummyNiftyData() {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    let data = [];
-                    let time = Math.floor(Date.now() / 1000) - (100 * 15 * 60); // 100 कैंडल्स 15-मिनट पहले
-                    let close = 24315; // शुरुआती कीमत
-                    for (let i = 0; i < 100; i++) {
-                        let open = close + (Math.random() - 0.5) * 50;
-                        high = Math.max(open, close) + Math.random() * 40;
-                        low = Math.min(open, close) - Math.random() * 40;
-                        close = close + (Math.random() - 0.5) * 70;
-                        volume = Math.random() * 5000000 + 1000000;
-                        
-                        data.push({
-                            time: time + (i * 15 * 60),
-                            open: parseFloat(open.toFixed(2)),
-                            high: parseFloat(high.toFixed(2)),
-                            low: parseFloat(low.toFixed(2)),
-                            close: parseFloat(close.toFixed(2)),
-                            volume: parseFloat(volume.toFixed(2))
-                        });
-                    }
-                    resolve(data);
-                }, 1500); // 1.5 सेकंड का नेटवर्क सिम्युलेशन
-            });
-        }
-
-        // चार्ट लोड करें
-        loadAndPlotChart();
-
     </script>
 
 </body>
