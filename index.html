@@ -7,13 +7,12 @@
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
   body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
- .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
-  #chart{width:100%; height:400px}
- .card{background:#161a22;margin:10px;padding:10px;border-radius:8px}
- .btn-buy{background:#22c55e;border:none;padding:10px 20px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
- .btn-sell{background:#ef4444;border:none;padding:10px 20px;border-radius:5px;color:#fff;font-weight:bold;margin:5px}
-  table{width:100%;border-collapse:collapse}
-  td,th{padding:8px;text-align:left}
+.header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
+  #chart{width:100%; height:450px}
+.card{background:#161a22;margin:10px;padding:12px;border-radius:8px}
+.btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
+.btn-sell{background:#ef4444;border:none;padding:10px 25px;border-radius:5px;color:#fff;font-weight:bold;margin:5px}
+  table{width:100%}
 </style>
 </head>
 <body>
@@ -25,7 +24,7 @@
 <div id="chart"></div>
 
 <div class="card">
-  <h3>Signal: <span id="signal" style="color:orange">CHECKING...</span></h3>
+  <h3>Signal: <span id="signal">CHECKING...</span></h3>
   <button class="btn-buy" onclick="placeOrder('BUY')">BUY</button>
   <button class="btn-sell" onclick="placeOrder('SELL')">SELL</button>
 </div>
@@ -51,7 +50,7 @@ function calculateEMA(data, period) {
 }
 
 function placeOrder(type){
-  const price = 24363.81;
+  const price = 24317.84;
   alert(`${type} Order Placed!\nQty: 1 Lot NIFTY\nPrice: ${price}\nStatus: Demo Order`);
 }
 
@@ -61,10 +60,21 @@ window.onload = function() {
         grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
     });
 
-    const candleSeries = chart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444' });
-    const volumeSeries = chart.addHistogramSeries({ color: '#26a69a', priceFormat: {type: 'volume'} });
-    const ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: 'EMA 9' });
-    const ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, title: 'EMA 15' });
+    // FIX 1: Price के लिए अलग pane
+    const candleSeries = chart.addCandlestickSeries({ 
+        upColor: '#22c55e', downColor: '#ef4444',
+        priceScaleId: 'right',
+    });
+    
+    // FIX 2: Volume के लिए अलग pane नीचे
+    const volumeSeries = chart.addHistogramSeries({
+        priceScaleId: 'volume',
+        priceFormat: { type: 'volume' },
+    });
+    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+
+    const ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: 'EMA 9', priceScaleId: 'right' });
+    const ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, title: 'EMA 15', priceScaleId: 'right' });
 
     function generateData() {
         const data = []; let price = 24300;
@@ -81,7 +91,7 @@ window.onload = function() {
 
     const candleData = generateData();
     candleSeries.setData(candleData);
-    volumeSeries.setData(candleData.map(d=>({time:d.time, value:d.volume, color:d.close>d.open?'#26a69a':'#ef5350'})));
+    volumeSeries.setData(candleData.map(d=>({time:d.time, value:d.volume, color:d.close>d.open?'#26a69a80':'#ef535080'})));
 
     const closes = candleData.map(c => c.close);
     const ema9 = calculateEMA(closes, 9);
@@ -90,7 +100,6 @@ window.onload = function() {
     ema9Series.setData(ema9.map((val, i) => ({ time: candleData[i+8].time, value: val })));
     ema15Series.setData(ema15.map((val, i) => ({ time: candleData[i+14].time, value: val })));
     
-    // Signal Check
     const last9 = ema9[ema9.length-1];
     const last15 = ema15[ema15.length-1];
     if(last9 > last15){
@@ -105,4 +114,4 @@ window.onload = function() {
 }
 </script>
 </body>
-</html>
+</html>h 
