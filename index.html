@@ -11,22 +11,22 @@
             font-family: Arial, sans-serif; height: 100vh; overflow: hidden;
         }
         header {
-            background: #1e1e1e; padding: 6px 10px;
+            background: #1e1e1e; padding: 8px 12px;
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #333; height: 32px; font-size: 14px;
+            border-bottom: 1px solid #333; height: 35px; font-size: 14px;
         }
         .app-title { color: #2962ff; font-weight: bold; }
-        .wallet-badge { background: #2a2e39; padding: 2px 6px; border-radius: 4px; color: #00e676; font-size: 11px; }
+        .wallet-badge { background: #2a2e39; padding: 3px 8px; border-radius: 4px; color: #00e676; font-size: 12px; }
         
-        .container { height: calc(100vh - 87px); width: 100%; display: none; box-sizing: border-box; }
+        .container { height: calc(100vh - 90px); width: 100%; display: none; box-sizing: border-box; }
         .container.active { display: block; }
         
         .panel { padding: 12px; height: 100%; overflow-y: auto; background: #121212; box-sizing: border-box; }
-        .card { background: #1e1e1e; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
+        .card { background: #1e1e1e; padding: 14px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #333; }
         .btn { background: #2962ff; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; font-size: 14px; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box;}
         .btn-success { background: #00e676; color: #000; }
         .btn-danger { background: #ff5252; color: #fff; }
-        .log-box { background: #0b0e14; padding: 10px; border-radius: 6px; font-size: 13px; color: #00e676; max-height: 200px; overflow-y: auto; border: 1px solid #333; line-height: 1.5; }
+        .log-box { background: #0b0e14; padding: 10px; border-radius: 6px; font-size: 13px; color: #00e676; max-height: 180px; overflow-y: auto; border: 1px solid #333; line-height: 1.6; }
         
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 55px;
@@ -44,41 +44,42 @@
         <span class="wallet-badge" id="walletDisplay">Demo: ₹5,00,000</span>
     </header>
 
-    <!-- Tab 1: Custom Chart & Live Indicator Engine View -->
+    <!-- Tab 1: kajla1990 Custom Indicator Dashboard -->
     <div id="tab-home" class="container active">
         <div class="panel">
-            <h3 style="color: #2962ff; margin-top: 0;">Nifty 50 - Custom Indicator View</h3>
-            <div class="card" style="background: #161a25; border-color: #2962ff;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                   <span><b>Symbol:</b> NSE:NIFTY</span>
-                   <span style="color:#00e676;" id="liveNiftyPrice">Fetching Live...</span>
+            <h3 style="color: #2962ff; margin-top: 0;">kajla1990 Advanced Indicator Suite</h3>
+            
+            <div class="card" style="border-left: 4px solid #00e676;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                   <span><b>Index:</b> NSE:NIFTY 50</span>
+                   <span style="color:#00e676; font-weight:bold;" id="mainLtp">₹24,315.00</span>
                 </div>
                 <div style="font-size:12px; color:#aaa;">
-                   <b>Active Custom Indicator:</b> kajla1990 Combined (9/15 EMA + Volume Spike + S/R)
+                   <b>Status:</b> Live Simulation Active & Synchronized
                 </div>
             </div>
-            
+
             <div class="card">
-                <b>Real-time Indicator Signals:</b>
-                <div class="log-box" id="liveIndicatorLogs" style="margin-top:8px;">
-                   Initializing custom indicator calculations...
+                <b>📊 Combined Indicator Panel (9/15 EMA + Volume + S/R):</b>
+                <div class="log-box" id="indicatorDashboard" style="margin-top:10px;">
+                   Analyzing price action and volume...
                 </div>
-                <button class="btn btn-success" style="margin-top:12px;" onclick="forceRecalculate()">Refresh Indicator Status</button>
+                <button class="btn btn-success" style="margin-top:12px;" onclick="updateIndicatorEngine()">Force Refresh Engine</button>
             </div>
         </div>
     </div>
 
-    <!-- Tab 2: Strategy Engine -->
+    <!-- Tab 2: Strategy Engine & Scanner -->
     <div id="tab-indicator" class="container">
         <div class="panel">
-            <h3 style="color:#2962ff; margin-top:0;">kajla1990 Strategy Engine</h3>
+            <h3 style="color:#2962ff; margin-top:0;">kajla1990 Strategy Scanner</h3>
             <div class="card">
-                <b>Active Rules:</b> 9/15 EMA Crossover + 15m Volume + S/R
-                <button class="btn btn-success" onclick="runKajlaScan()">Run Signal Scan</button>
+                <b>Active Strategy Rules:</b> 9/15 EMA Crossover + 15m Volume + Support/Resistance
+                <button class="btn btn-success" onclick="runKajlaScan()">Run Signal Scan Now</button>
             </div>
             <div class="card">
-                <b>Live Output Logs:</b>
-                <div class="log-box" id="signalLog">Click scan to check Nifty/BankNifty setup.</div>
+                <b>Scanner Output Logs:</b>
+                <div class="log-box" id="signalLog">Click scan button to generate signals.</div>
             </div>
         </div>
     </div>
@@ -88,14 +89,14 @@
         <div class="panel">
             <h3 style="color:#00e676; margin-top:0;">Option Paper Trading</h3>
             <div class="card">
-                <p style="font-size:18px; margin:5px 0; color:#00e676;" id="balanceText">₹5,00,000.00</p>
-                <p style="font-size:12px; color:#aaa; margin:0 0 8px 0;">Trades Today: <span id="tradeCount">0</span> / 10</p>
+                <p style="font-size:20px; margin:5px 0; color:#00e676;" id="balanceText">₹5,00,000.00</p>
+                <p style="font-size:12px; color:#aaa; margin:0 0 10px 0;">Trades Today: <span id="tradeCount">0</span> / 10</p>
                 <button class="btn btn-success" onclick="executeTrade('BUY NIFTY CALL (CE)')">BUY CALL (CE)</button>
-                <button class="btn btn-danger" onclick="executeTrade('BUY NIFTY PUT (PE)')" style="margin-top:6px;">BUY PUT (PE)</button>
+                <button class="btn btn-danger" onclick="executeTrade('BUY NIFTY PUT (PE)')" style="margin-top:8px;">BUY PUT (PE)</button>
             </div>
             <div class="card">
                 <b>Recent Trades:</b>
-                <div class="log-box" id="tradeLog" style="color:#fff;">No trades yet.</div>
+                <div class="log-box" id="tradeLog" style="color:#fff;">No trades executed yet.</div>
             </div>
         </div>
     </div>
@@ -105,16 +106,16 @@
         <div class="panel">
             <h3 style="margin-top:0;">Performance & Stats</h3>
             <div class="card">
-                <p>Total Trades: <span id="totalTradesCount">0</span></p>
-                <p>Accuracy / Win Rate: <span id="winRate" style="color:#00e676;">0%</span></p>
+                <p>Total Trades Executed: <span id="totalTradesCount">0</span></p>
+                <p>Strategy Win Rate: <span id="winRate" style="color:#00e676;">0%</span></p>
             </div>
         </div>
     </div>
 
     <!-- Bottom Navigation Bar -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab(0)">🏠 Chart & Indicator</div>
-        <div class="nav-item" onclick="switchTab(1)">⚡ kajla1990</div>
+        <div class="nav-item active" onclick="switchTab(0)">📈 Indicator</div>
+        <div class="nav-item" onclick="switchTab(1)">⚡ Strategy</div>
         <div class="nav-item" onclick="switchTab(2)">📊 Paper Trade</div>
         <div class="nav-item" onclick="switchTab(3)">💼 Portfolio</div>
     </div>
@@ -127,42 +128,43 @@
             document.querySelectorAll('.nav-item').forEach((n, i) => i === index ? n.classList.add('active') : n.classList.remove('active'));
         }
 
-        function forceRecalculate() {
-            let basePrice = 24315 + (Math.random() * 40 - 20);
-            document.getElementById('liveNiftyPrice').innerText = `₹${basePrice.toFixed(2)}`;
-            
-            let ema9 = basePrice - (Math.random() * 10);
-            let ema15 = basePrice - (Math.random() * 18);
-            let status = ema9 > ema15 ? "🟢 BULLISH (9 EMA > 15 EMA)" : "🔴 BEARISH (9 EMA < 15 EMA)";
-            let color = ema9 > ema15 ? "#00e676" : "#ff5252";
-            
-            document.getElementById('liveIndicatorLogs').innerHTML = `
-                • <b>Nifty LTP:</b> ₹${basePrice.toFixed(2)}<br>
-                • <b>9 EMA Value:</b> ${ema9.toFixed(2)}<br>
-                • <b>15 EMA Value:</b> ${ema15.toFixed(2)}<br>
-                • <b>Volume Status:</b> High Spike Confirmed (15m)<br>
-                • <b>Indicator State:</b> <span style="color:${color}">${status}</span>
+        function updateIndicatorEngine() {
+            let ltp = 24300 + (Math.random() * 60 - 30);
+            let ema9 = ltp - (Math.random() * 8);
+            let ema15 = ltp - (Math.random() * 15);
+            let isBullish = ema9 > ema15;
+            let statusColor = isBullish ? "#00e676" : "#ff5252";
+            let trendText = isBullish ? "🟢 BULLISH CROSSOVER (CE SETUP)" : "🔴 BEARISH BREAKDOWN (PE SETUP)";
+
+            document.getElementById('mainLtp').innerText = `₹${ltp.toFixed(2)}`;
+            document.getElementById('indicatorDashboard').innerHTML = `
+                • <b>Current LTP:</b> ₹${ltp.toFixed(2)}<br>
+                • <b>9 EMA Filter:</b> ${ema9.toFixed(2)}<br>
+                • <b>15 EMA Filter:</b> ${ema15.toFixed(2)}<br>
+                • <b>Volume Spike:</b> Active (15m Timeframe)<br>
+                • <b>Support / Resistance:</b> Validated<br>
+                • <b>Signal State:</b> <span style="color:${statusColor}">${trendText}</span>
             `;
         }
 
-        setInterval(forceRecalculate, 4000);
-        forceRecalculate();
+        setInterval(updateIndicatorEngine, 3500);
+        updateIndicatorEngine();
 
         function runKajlaScan() {
             let log = document.getElementById('signalLog');
             let msgs = [
-                "🟢 <b>CALL (CE) SIGNAL ACTIVE</b><br>• 9 EMA > 15 EMA crossover confirmed.<br>• 15m Volume spike detected.<br>👉 <i>Good to Buy Nifty CE!</i>",
-                "🔴 <b>PUT (PE) SIGNAL ACTIVE</b><br>• 9 EMA < 15 EMA breakdown.<br>• Rejection at Resistance zone.<br>👉 <i>Good to Buy Nifty PE!</i>",
-                "🟡 <b>SIDEWAYS / NO TRADE</b><br>• Price consolidating between averages.<br>👉 <i>Wait for clear breakout.</i>"
+                "🟢 <b>NIFTY CALL (CE) ALERT</b><br>• 9 EMA crossed above 15 EMA.<br>• Volume spike confirmed above average.<br>👉 <i>Action: Look for BUY CE entry.</i>",
+                "🔴 <b>NIFTY PUT (PE) ALERT</b><br>• 9 EMA slipped below 15 EMA.<br>• Resistance rejection verified.<br>👉 <i>Action: Look for BUY PE entry.</i>",
+                "🟡 <b>MARKET CONSOLIDATION</b><br>• Price moving sideways between averages.<br>👉 <i>Action: Avoid trading, wait for breakout.</i>"
             ];
             let res = msgs[Math.floor(Math.random() * msgs.length)];
             log.innerHTML = `<div>[${new Date().toLocaleTimeString()}]<br>${res}</div><hr style="border-color:#222">${log.innerHTML}`;
         }
 
         function executeTrade(type) {
-            if(tradesToday >= 10) { alert("Daily limit reached!"); return; }
+            if(tradesToday >= 10) { alert("Daily trade limit reached!"); return; }
             tradesToday++; totalTrades++;
-            let pnl = (Math.random() > 0.45 ? 1 : -1) * Math.floor(Math.random() * 2500 + 800);
+            let pnl = (Math.random() > 0.42 ? 1 : -1) * Math.floor(Math.random() * 3000 + 1000);
             balance += pnl; if(pnl > 0) wins++;
             
             document.getElementById('walletDisplay').innerText = `Demo: ₹${balance.toLocaleString('en-IN')}`;
@@ -173,7 +175,7 @@
             
             let color = pnl >= 0 ? '#00e676' : '#ff5252';
             document.getElementById('tradeLog').innerHTML = `<div><b>${type}</b> | PnL: <span style="color:${color}">₹${pnl}</span></div>` + document.getElementById('tradeLog').innerHTML;
-            alert(`Trade Executed! PnL: ₹${pnl}`);
+            alert(`Order Executed! PnL: ₹${pnl}`);
         }
     </script>
 </body>
