@@ -1,40 +1,48 @@
-// यह एरे कोटक API से आने वाले या ऐतिहासिक 15-मिनट के क्लोजिंग प्राइसेस को स्टोर करेगा
-let priceHistory = [];
-const PERIOD = 14; // मूविंग एवरेज या इंडिकेटर पीरियड
+<!-- पुराने कोड की जगह यह नया और अधिक मजबूत कोड उपयोग करें -->
 
-// कोटक API से जब भी नया डेटा या टिक मिले, यह फंक्शन कॉल होगा
-function processMarketData(currentPrice) {
-    priceHistory.push(currentPrice);
-    
-    // अगर हमारे पास पर्याप्त डेटा नहीं है, तो इंतजार करें
-    if (priceHistory.length < PERIOD) {
-        document.getElementById("signalDisplay").innerText = "Gathering Data for 15-Min Analysis...";
-        return;
-    }
-
-    // केवल आखिरी 15-30 मिनट के ट्रेंड को कैलकुलेट करें (Simple Moving Average - SMA उदाहरण)
-    let sum = 0;
-    for (let i = priceHistory.length - PERIOD; i < priceHistory.length; i++) {
-        sum += priceHistory[i];
-    }
-    let sma = sum / PERIOD;
-
-    // सिग्नल तय करना (जो केवल एक निश्चित अंतराल या नई कैंडल पर बदलेगा)
-    const signalBox = document.getElementById("signalDisplay");
-    
-    if (currentPrice > sma) {
-        signalBox.className = "signal-box bullish";
-        signalBox.innerHTML = "BULLISH 🚀 (15-Min Trend Up)";
-    } else if (currentPrice < sma) {
-        signalBox.className = "signal-box bearish";
-        signalBox.innerHTML = "BEARISH 📉 (15-Min Trend Down)";
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+<script type="text/javascript">
+    // सुनिश्चित करें कि यह HTML एलिमेंट मौजूद है और उसका आईडी 'tradingview_widget_container' है
+    if (document.getElementById('tradingview_widget_container')) {
+        new TradingView.widget({
+            "autosize": true,
+            // 'symbol' को सही करें। 'NSE:NIFTY50' के बजाय try करें:
+            "symbol": "NSE:NIFTY", 
+            "interval": "15", // आपका 15 मिनट का टाइमफ्रेम
+            "timezone": "Asia/Kolkata", // भारतीय टाइमजोन
+            "theme": "dark", // आपका डार्क थीम
+            "style": "1",
+            "locale": "en",
+            "toolbar_bg": "#181A21", // थोड़ा बेहतर डार्क टूलबार
+            "enable_publishing": false,
+            // यह सबसे महत्वपूर्ण हिस्सा है - कस्टम इंडिकेटर को जोड़ना
+            "studies": [
+                // उदाहरण: 9 EMA जोड़ना
+                {
+                    "id": "MASimple@tv-basicstudies",
+                    "inputs": {
+                        "length": 9,
+                        "source": "close"
+                    }
+                },
+                // उदाहरण: 15 EMA जोड़ना
+                {
+                    "id": "MASimple@tv-basicstudies",
+                    "inputs": {
+                        "length": 15,
+                        "source": "close"
+                    }
+                },
+                // यदि आपने अपना कस्टम इंडिकेटर (pine script) बनाया है और आपके पास उसका स्क्रिप्ट ID है:
+                // {
+                //    "id": "PUB;YOUR_CUSTOM_SCRIPT_ID_HERE@tv-basicstudies"
+                // }
+            ],
+            "hide_side_toolbar": false,
+            "allow_symbol_change": true,
+            "container_id": "tradingview_widget_container" // सुनिश्चित करें कि यह DIV आईडी से मेल खाता है
+        });
     } else {
-        signalBox.className = "signal-box neutral";
-        signalBox.innerHTML = "NEUTRAL ⚖️";
+        console.error("TradingView container not found!");
     }
-}
-
-// कैंडलस्टिक पैटर्न न दिखने की समस्या के लिए:
-// यदि आप खुद का कैनवास (HTML5 Canvas) या चार्ट बना रहे हैं, तो सुनिश्चित करें कि 
-// आप कोटक API के 'Open, High, Low, Close (OHLC)' डाटा को सही अरे (Array) में पास कर रहे हैं।
-        
+</script>
