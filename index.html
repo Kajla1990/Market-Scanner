@@ -1,40 +1,33 @@
-<div class="tabs">
-  <div class="tab active" onclick="showTab('chart')">Chart</div>
-  <div class="tab" onclick="showTab('holdings')">Holdings</div>
-  <div class="tab" onclick="showTab('orders')">Orders</div>
+<div class="card">
+  <h3>Signal: <span id="signal" style="color:orange">WAIT</span></h3>
+  <button onclick="placeOrder('BUY')">BUY</button>
+  <button style="background:#ef4444" onclick="placeOrder('SELL')">SELL</button>
 </div>
 
-<div id="holdings" style="display:none" class="card">
-  <h3>📊 My Holdings - Demat</h3>
+<div class="card">
+  <h3>📊 My Holdings</h3>
   <table>
-    <tr><th>Stock</th><th>Qty</th><th>Avg</th><th>LTP</th><th>P&L</th></tr>
-    <tr><td>RELIANCE</td><td>10</td><td>2850</td><td>2900</td><td style="color:#22c55e">+500</td></tr>
-    <tr><td>TCS</td><td>5</td><td>3800</td><td>3750</td><td style="color:#ef4444">-250</td></tr>
+    <tr><th>Stock</th><th>Qty</th><th>P&L</th></tr>
+    <tr><td>NIFTY</td><td>5 Lot</td><td style="color:#22c55e">+₹2500</td></tr>
   </table>
-  <button onclick="alert('Buy Clicked - Demo')">BUY</button>
-  <button style="background:#ef4444" onclick="alert('Sell Clicked - Demo')">SELL</button>
 </div>
-
-<div id="orders" style="display:none" class="card">
-  <h3>📝 Order Book</h3>
-  <p>No orders yet</p>
-</div>
-
-<style>
-.tabs{display:flex;background:#161a22}
-.tab{padding:12px;cursor:pointer;flex:1;text-align:center}
-.tab.active{background:#22c55e;color:#000}
-.card{background:#161a22;margin:10px;padding:10px;border-radius:8px}
-table{width:100%}
-button{background:#22c55e;border:none;padding:8px 15px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
-</style>
 
 <script>
-function showTab(tab){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('chart').style.display = tab=='chart'?'block':'none';
-  document.getElementById('holdings').style.display = tab=='holdings'?'block':'none';
-  document.getElementById('orders').style.display = tab=='orders'?'block':'none';
+function placeOrder(type){
+  alert(type + " Order Placed!\nQty: 1 Lot NIFTY\nPrice: 24363.81\nStatus: Demo Order");
 }
+
+// Auto Signal Check
+function checkSignal(){
+  const ema9 = 24375.27; // आप यहां last EMA value डालना
+  const ema15 = 24371.14;
+  if(ema9 > ema15){
+    document.getElementById('signal').innerText = "BUY SIGNAL";
+    document.getElementById('signal').style.color = "#22c55e";
+  } else {
+    document.getElementById('signal').innerText = "SELL SIGNAL";
+    document.getElementById('signal').style.color = "#ef4444";
+  }
+}
+checkSignal();
 </script>
