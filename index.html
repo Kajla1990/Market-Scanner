@@ -92,11 +92,25 @@
 
         window.addEventListener('resize', resizeCanvas);
 
+        // Simple EMA Calculation Helper
+        function calculateEMA(data, period) {
+            let k = 2 / (period + 1);
+            let emaArray = [];
+            let prevEMA = data[0];
+            emaArray.push(prevEMA);
+            for (let i = 1; i < data.length; i++) {
+                let currentEMA = (data[i] * k) + (prevEMA * (1 - k));
+                emaArray.push(currentEMA);
+                prevEMA = currentEMA;
+            }
+            return emaArray;
+        }
+
         function drawChart() {
             ctx.fillStyle = '#121212';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            //Grid lines
+            // Grid lines
             ctx.strokeStyle = '#222222';
             ctx.lineWidth = 1;
             for(let i = 0; i < canvas.width; i += 40) {
@@ -112,37 +126,109 @@
                 ctx.stroke();
             }
 
-            // Dummy Candlestick & Indicator Drawing
-            let candles = 30;
+            let candles = 35;
             let candWidth = canvas.width / candles;
-            let price = canvas.height / 2;
+            let basePrice = canvas.height / 2;
 
-            ctx.font = '12px Arial';
-            ctx.fillStyle = '#00E676';
-            ctx.fillText("NSE: NIFTY 50 | 15m | 9/15 EMA Active", 15, 25);
+            // Generate dummy price data for simulation
+            let closePrices = [];
+            let rawCandles = [];
+            for(let i = 0; i < candles; i++) {
+                let h = Math.sin(i * 0.3) * 60;
+                let open = basePrice + h;
+                let close = open + (Math.sin(i * 0.5) * 20);
+                let high = Math.min(open, close) - 10 - Math.random() * 15;
+                let low = Math.max(open, close) + 10 + Math.random() * 15;
+                closePrices.push(close);
+                rawCandles.push({open, close, high, low});
+            }
 
+            // Calculate 9 and 15 EMA
+            let ema9 = calculateEMA(closePrices, 9);
+            let ema15 = calculateEMA(closePrices, 15);
+
+            // Draw Candlesticks
             for(let i = 0; i < candles; i++) {
                 let x = i * candWidth + candWidth / 2;
-                let h = Math.sin(i * 0.4) * 50;
-                let open = price + h;
-                let close = open + (Math.random() - 0.5) * 30;
-                let high = Math.min(open, close) - 15 - Math.random() * 20;
-                let low = Math.max(open, close) + 15 + Math.random() * 20;
+                let c = rawCandles[i];
 
-                let isGreen = close <= open; // Canvas coordinates are inverted vertically
+                let isGreen = c.close <= c.open; // Inverted Y-axis logic
                 ctx.strokeStyle = isGreen ? '#00E676' : '#FF1744';
                 ctx.fillStyle = isGreen ? '#00E676' : '#FF1744';
                 ctx.lineWidth = 2;
 
                 // Wick
                 ctx.beginPath();
-                ctx.moveTo(x, high);
-                ctx.lineTo(x, low);
+                ctx.moveTo(x, c.high);
+                ctx.lineTo(x, c.low);
                 ctx.stroke();
 
                 // Body
-                ctx.fillRect(x - candWidth/3, Math.min(open, close), candWidth/1.5, Math.abs(close - open) || 2);
+                ctx.fillRect(x - candWidth/3, Math.min(c.open, c.close), candWidth/1.5, Math.abs(c.close - c.open) || 2);
             }
+
+            // Draw 9 EMA Line (Yellow)
+            ctx.strokeStyle = '#FFEB3B';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i = 0; i < candles; i++) {
+                let x = i * candWidth + candWidth / 2;
+                if(i === 0) ctx.moveTo(x, ema9[i]);
+                else ctx.lineTo(x, ema9[i]);
+            }
+            ctx.stroke();
+
+            // Draw 15 EMA Line (Blue)
+            ctx.strokeStyle = '#00B0FF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i = 0; i < candles; i++) {
+                let x = i * candWidth + candWidth / 2;
+                if(i === 0) ctx.moveTo(x, ema15[i]);
+                else ctx.lineTo(x, ema15[i]);
+            }
+            ctx.stroke();
+
+            // Stable Signal Generation Logic (Check Crossover with holding duration filter)
+            let lastSignal = "";
+            let signalCooldown = 0; // To prevent rapid flickering and ensure 15-20 min stability
+
+            for(let i = 2; i < candles; i++) {
+                let x = i * candWidth + candWidth / 2;
+                
+                if (signalCooldown > 0) {
+                    signalCooldown--;
+                    continue;
+                }
+
+                // Combined condition: 9 EMA crosses 15 EMA + Trend confirmation
+                let bullishCross = (ema9[i] < ema15[i]) && (ema9[i-1] >= ema15[i-1]); // Canvas inverted coordinate check
+                let bearishCross = (ema9[i] > ema15[i]) && (ema9[i-1] <= ema15[i-1]);
+
+                if (bullishCross && lastSignal !== "CALL") {
+                    lastSignal = "CALL";
+                    signalCooldown = 5; // Keeps the signal locked/stable for next few candles
+                    
+                    // Draw BUY / CALL Signal Label
+                    ctx.fillStyle = '#00E676';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.fillText("🟢 CALL", x - 18, rawCandles[i].low + 25);
+                } 
+                else if (bearishCross && lastSignal !== "PUT") {
+                    lastSignal = "PUT";
+                    signalCooldown = 5; // Keeps the signal locked/stable
+                    
+                    // Draw SELL / PUT Signal Label
+                    ctx.fillStyle = '#FF1744';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.fillText("🔴 PUT", x - 15, rawCandles[i].high - 15);
+                }
+            }
+
+            // Top Banner info
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#00E676';
+            ctx.fillText("NSE: NIFTY 50 | 15m | 9/15 EMA + Stable Trend Filter Active", 15, 25);
         }
 
         // Initial load
