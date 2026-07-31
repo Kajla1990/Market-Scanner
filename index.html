@@ -15,14 +15,17 @@
     .buy { color: #3fb950; font-size: 20px; font-weight: bold; }
     .sell { color: #f85149; font-size: 20px; font-weight: bold; }
     .wait { color: #d29922; font-size: 18px; font-weight: bold; }
+    .error { color: #f85149; }
     select { width: 100%; padding: 10px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; }
     #output { font-size: 15px; line-height: 1.8; }
+    .time { font-size: 12px; color: #8b949e; text-align: center; }
 </style>
 </head>
 <body>
 
 <div class="header">
     <h2>🔥 KSP v5.1 - 88% Sniper</h2>
+    <div class="time" id="liveTime"></div>
 </div>
 
 <div class="card">
@@ -50,45 +53,64 @@
     <b>Rules:</b> 9:30-2:30 | Thu 1:30 Lock | ADX 3 Candle | 9/11 Confluence
 </div>
 
+<audio id="alertSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+
 <script>
+// Live Time Update
+function updateTime() {
+    document.getElementById("liveTime").innerText = "IST: " + new Date().toLocaleTimeString();
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+function vibrate() {
+    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+
+function playSound() {
+    document.getElementById("alertSound").play();
+}
+
 function checkSignal() {
     const now = new Date();
     let h = now.getHours();
     let m = now.getMinutes();
     let day = now.getDay();
-    
     let out = document.getElementById("output");
     
     // Time Check
     if(h < 9 || (h==9 && m<30) || h>14 || (h==14 && m>30)) {
-        out.innerHTML = "❌ Market Band<br>Time: 9:30 AM - 2:30 PM";
+        out.innerHTML = `<span class="error">❌ Market Band</span><br>Time: 9:30 AM - 2:30 PM<br>Current: ${h}:${m}`;
         return;
     }
     
     // Expiry Lock
     if(day == 4 && (h>13 || (h==13 && m>=30))) {
-        out.innerHTML = "❌ Expiry Lock ON<br>Thursday 1:30 ke baad trade nahi";
+        out.innerHTML = `<span class="error">❌ Expiry Lock ON</span><br>Thursday 1:30 ke baad nayi trade nahi`;
         return;
     }
     
-    // Demo Signal - yaha real logic lagega
+    // Demo Signal Logic - yaha tu apna calculation dalna
     let r = Math.random();
     let con = Math.floor(Math.random()*3)+9;
     let entry = (24000 + Math.random()*500).toFixed(2);
+    let sl = (entry-25).toFixed(2);
     
     if(r > 0.6 && con >=9) {
+        playSound(); vibrate();
         out.innerHTML = `<span class="buy">🟢 BUY SIGNAL</span><br><br>
-        Confluence: ${con}/11<br>
+        Confluence: ${con}/11 ✅<br>
         Entry: ${entry}<br>
-        SL: ${(entry-25).toFixed(2)}<br>
+        SL: ${sl}<br>
         TP1: ${(parseFloat(entry)+25).toFixed(2)}<br>
         TP2: ${(parseFloat(entry)+50).toFixed(2)}<br>
         TP3: ${(parseFloat(entry)+75).toFixed(2)}<br><br>
         Time: ${now.toLocaleTimeString()}`;
     }
     else if(r < 0.3 && con >=9) {
+        playSound(); vibrate();
         out.innerHTML = `<span class="sell">🔴 SELL SIGNAL</span><br><br>
-        Confluence: ${con}/11<br>
+        Confluence: ${con}/11 ✅<br>
         Entry: ${entry}<br>
         SL: ${(parseFloat(entry)+25).toFixed(2)}<br>
         TP1: ${(entry-25).toFixed(2)}<br>
@@ -104,7 +126,7 @@ function checkSignal() {
     }
 }
 
-// Auto refresh har 1 min
+// Auto check har 1 min
 setInterval(checkSignal, 60000);
 </script>
 
