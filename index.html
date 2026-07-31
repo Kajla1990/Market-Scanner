@@ -1,238 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kajla1990 Terminal - Market Scanner</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .header {
-            background-color: #181A21;
-            padding: 12px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-        }
-        .header-title {
-            color: #2979FF;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .header-balance {
-            color: #00E676;
-            font-size: 14px;
-        }
-        .chart-container {
-            flex: 1;
-            width: 100%;
-            position: relative;
-            background-color: #121212;
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        .footer {
-            background-color: #181A21;
-            padding: 10px;
-            display: flex;
-            justify-content: space-around;
-            border-top: 1px solid #333;
-        }
-        .footer-item {
-            color: #888;
-            font-size: 12px;
-            text-align: center;
-        }
-        .footer-item.active {
-            color: #2979FF;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Market Scanner with Indicators</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/technicalindicators@3.1.0/dist/browser.js"></script>
+<style>
+  body { background:#0e1117; color:#fff; font-family:sans-serif; padding:20px; }
+  canvas { background:#161a22; border-radius:10px; }
+</style>
 </head>
 <body>
+<h2>📈 Market Scanner - EMA + RSI</h2>
+<canvas id="priceChart" height="120"></canvas>
+<canvas id="rsiChart" height="60"></canvas>
 
-    <div class="header">
-        <div class="header-title">kajla1990 🇮🇳 Terminal</div>
-        <div class="header-balance">Demo: ₹4,98,000</div>
-    </div>
+<script>
+// 1. Sample OHLCV data - replace this with your API data
+const data = {
+  labels: ["Day1","Day2","Day3","Day4","Day5","Day6","Day7","Day8","Day9","Day10","Day11","Day12","Day13","Day14","Day15","Day16","Day17","Day18","Day19","Day20"],
+  close:  [100,102,101,103,105,107,106,108,110,109,111,113,112,114,115,117,116,118,120,119],
+  high:   [101,103,102,104,106,108,107,109,111,110,112,114,113,115,116,118,117,119,121,120],
+  low:    [99,101,100,102,104,106,105,107,109,108,110,112,111,113,114,116,115,117,119,118],
+  open:   [100,101,102,101,103,105,107,106,108,110,109,111,113,112,114,115,117,116,118,120],
+  volume: [1200,1300,1250,1400,1500,1600,1550,1700,1800,1750,1900,2000,1950,2100,2200,2300,2250,2400,2500,2450]
+};
 
-    <div class="chart-container" id="chartBox">
-        <canvas id="niftyCanvas"></canvas>
-    </div>
+// 2. Calculate Indicators - NO ERROR if data < period
+const EMA = technicalindicators.EMA.calculate({period: 20, values: data.close});
+const RSI = technicalindicators.RSI.calculate({period: 14, values: data.close});
 
-    <div class="footer">
-        <div class="footer-item active">Chart & Ind</div>
-        <div class="footer-item">Strategy</div>
-        <div class="footer-item">Paper Trade</div>
-        <div class="footer-item">Portfolio</div>
-    </div>
+// Pad with nulls so arrays match label length. Chart.js needs same length
+const emaPadded = Array(data.close.length - EMA.length).fill(null).concat(EMA);
+const rsiPadded = Array(data.close.length - RSI.length).fill(null).concat(RSI);
 
-    <script>
-        const canvas = document.getElementById('niftyCanvas');
-        const ctx = canvas.getContext('2d');
-        const box = document.getElementById('chartBox');
-
-        function resizeCanvas() {
-            canvas.width = box.clientWidth;
-            canvas.height = box.clientHeight;
-            drawChart();
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-
-        // Simple EMA Calculation Helper
-        function calculateEMA(data, period) {
-            let k = 2 / (period + 1);
-            let emaArray = [];
-            let prevEMA = data[0];
-            emaArray.push(prevEMA);
-            for (let i = 1; i < data.length; i++) {
-                let currentEMA = (data[i] * k) + (prevEMA * (1 - k));
-                emaArray.push(currentEMA);
-                prevEMA = currentEMA;
-            }
-            return emaArray;
-        }
-
-        function drawChart() {
-            ctx.fillStyle = '#121212';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Grid lines
-            ctx.strokeStyle = '#222222';
-            ctx.lineWidth = 1;
-            for(let i = 0; i < canvas.width; i += 40) {
-                ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i, canvas.height);
-                ctx.stroke();
-            }
-            for(let j = 0; j < canvas.height; j += 40) {
-                ctx.beginPath();
-                ctx.moveTo(0, j);
-                ctx.lineTo(canvas.width, j);
-                ctx.stroke();
-            }
-
-            let candles = 35;
-            let candWidth = canvas.width / candles;
-            let basePrice = canvas.height / 2;
-
-            // Generate dummy price data for simulation
-            let closePrices = [];
-            let rawCandles = [];
-            for(let i = 0; i < candles; i++) {
-                let h = Math.sin(i * 0.3) * 60;
-                let open = basePrice + h;
-                let close = open + (Math.sin(i * 0.5) * 20);
-                let high = Math.min(open, close) - 10 - Math.random() * 15;
-                let low = Math.max(open, close) + 10 + Math.random() * 15;
-                closePrices.push(close);
-                rawCandles.push({open, close, high, low});
-            }
-
-            // Calculate 9 and 15 EMA
-            let ema9 = calculateEMA(closePrices, 9);
-            let ema15 = calculateEMA(closePrices, 15);
-
-            // Draw Candlesticks
-            for(let i = 0; i < candles; i++) {
-                let x = i * candWidth + candWidth / 2;
-                let c = rawCandles[i];
-
-                let isGreen = c.close <= c.open; // Inverted Y-axis logic
-                ctx.strokeStyle = isGreen ? '#00E676' : '#FF1744';
-                ctx.fillStyle = isGreen ? '#00E676' : '#FF1744';
-                ctx.lineWidth = 2;
-
-                // Wick
-                ctx.beginPath();
-                ctx.moveTo(x, c.high);
-                ctx.lineTo(x, c.low);
-                ctx.stroke();
-
-                // Body
-                ctx.fillRect(x - candWidth/3, Math.min(c.open, c.close), candWidth/1.5, Math.abs(c.close - c.open) || 2);
-            }
-
-            // Draw 9 EMA Line (Yellow)
-            ctx.strokeStyle = '#FFEB3B';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            for(let i = 0; i < candles; i++) {
-                let x = i * candWidth + candWidth / 2;
-                if(i === 0) ctx.moveTo(x, ema9[i]);
-                else ctx.lineTo(x, ema9[i]);
-            }
-            ctx.stroke();
-
-            // Draw 15 EMA Line (Blue)
-            ctx.strokeStyle = '#00B0FF';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            for(let i = 0; i < candles; i++) {
-                let x = i * candWidth + candWidth / 2;
-                if(i === 0) ctx.moveTo(x, ema15[i]);
-                else ctx.lineTo(x, ema15[i]);
-            }
-            ctx.stroke();
-
-            // Stable Signal Generation Logic (Check Crossover with holding duration filter)
-            let lastSignal = "";
-            let signalCooldown = 0; // To prevent rapid flickering and ensure 15-20 min stability
-
-            for(let i = 2; i < candles; i++) {
-                let x = i * candWidth + candWidth / 2;
-                
-                if (signalCooldown > 0) {
-                    signalCooldown--;
-                    continue;
-                }
-
-                // Combined condition: 9 EMA crosses 15 EMA + Trend confirmation
-                let bullishCross = (ema9[i] < ema15[i]) && (ema9[i-1] >= ema15[i-1]); // Canvas inverted coordinate check
-                let bearishCross = (ema9[i] > ema15[i]) && (ema9[i-1] <= ema15[i-1]);
-
-                if (bullishCross && lastSignal !== "CALL") {
-                    lastSignal = "CALL";
-                    signalCooldown = 5; // Keeps the signal locked/stable for next few candles
-                    
-                    // Draw BUY / CALL Signal Label
-                    ctx.fillStyle = '#00E676';
-                    ctx.font = 'bold 11px Arial';
-                    ctx.fillText("🟢 CALL", x - 18, rawCandles[i].low + 25);
-                } 
-                else if (bearishCross && lastSignal !== "PUT") {
-                    lastSignal = "PUT";
-                    signalCooldown = 5; // Keeps the signal locked/stable
-                    
-                    // Draw SELL / PUT Signal Label
-                    ctx.fillStyle = '#FF1744';
-                    ctx.font = 'bold 11px Arial';
-                    ctx.fillText("🔴 PUT", x - 15, rawCandles[i].high - 15);
-                }
-            }
-
-            // Top Banner info
-            ctx.font = '12px Arial';
-            ctx.fillStyle = '#00E676';
-            ctx.fillText("NSE: NIFTY 50 | 15m | 9/15 EMA + Stable Trend Filter Active", 15, 25);
-        }
-
-        // Initial load
-        setTimeout(resizeCanvas, 100);
-    </script>
-</body>
-</html>
+// 3. Price Chart with EMA
+const priceCtx = document.getElementById('priceChart').getContext('2d');
+new Chart(priceCtx, {
+  type: 'line',
+  data: {
+    labels: data.labels,
+    datasets: [
+      {
+        label: 'Close Price',
+        data: data.close,
+        borderColor: '#4ade80',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.1
+      },
+      {
+        label: 'EMA 20',
+        data: emaPadded,
+        borderColor: '#facc
