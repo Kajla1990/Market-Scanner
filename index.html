@@ -4,16 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kajla Terminal Pro</title>
-<!-- CDN बदला -->
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
   body{margin:0;background:#0b0e14;color:#fff;font-family:Arial}
 .header{display:flex;justify-content:space-between;padding:10px;background:#161a22;font-size:14px}
-  #chart{width:100%; height:400px}
+.watchlist{display:flex;gap:10px;padding:10px;overflow-x:auto}
+.watchlist button{background:#1f2937;border:1px solid #374151;color:#fff;padding:8px 15px;border-radius:5px}
+.watchlist button.active{background:#2563eb}
+  #chart{width:100%; height:300px}
+  #rsi{width:100%; height:100px}
+  #macd{width:100%; height:100px}
 .card{background:#161a22;margin:10px;padding:12px;border-radius:8px}
 .btn-buy{background:#22c55e;border:none;padding:10px 25px;border-radius:5px;color:#000;font-weight:bold;margin:5px}
 .btn-sell{background:#ef4444;border:none;padding:10px 25px;border-radius:5px;color:#fff;font-weight:bold;margin:5px}
-  table{width:100%;border-collapse:collapse} td,th{padding:6px;text-align:left}
+  table{width:100%;border-collapse:collapse} td,th{padding:6px;text-align:left;font-size:13px}
 </style>
 </head>
 <body>
@@ -22,7 +26,15 @@
   <div style="color:#22c55e">Demo: ₹4,98,000</div>
 </div>
 
+<div class="watchlist">
+  <button class="active" onclick="changeStock('NIFTY', this)">NIFTY</button>
+  <button onclick="changeStock('BANKNIFTY', this)">BANKNIFTY</button>
+  <button onclick="changeStock('RELIANCE', this)">RELIANCE</button>
+</div>
+
 <div id="chart"></div>
+<div id="rsi"></div>
+<div id="macd"></div>
 
 <div class="card">
   <h3>Signal: <span id="signal">CHECKING...</span></h3>
@@ -32,103 +44,4 @@
 
 <div class="card">
   <h3>📊 My Holdings</h3>
-  <table><tr><th>Stock</th><th>Qty</th><th>P&L</th></tr>
-  <tr><td>NIFTY</td><td>5 Lot</td><td style="color:#22c55e">+₹2500</td></tr></table>
-</div>
-
-<div id="orders" class="card"></div>
-
-<script>
-let candleData = [];
-let orderHistory = JSON.parse(localStorage.getItem('orders')) || [];
-
-function calculateEMA(data, period) {
-    const k = 2 / (period + 1); let ema = data[0]; let emaArray = [];
-    for (let i = 0; i < data.length; i++) {
-        ema = data[i] * k + ema * (1 - k);
-        if(i >= period - 1) emaArray.push(ema);
-    }
-    return emaArray;
-}
-
-function placeOrder(type){
-  const price = candleData[candleData.length-1].close.toFixed(2);
-  const newOrder = {type, price, time: new Date().toLocaleTimeString()};
-  orderHistory.push(newOrder);
-  localStorage.setItem('orders', JSON.stringify(orderHistory));
-  alert(`${type} Order Placed @ ${price}`);
-  showOrders();
-}
-
-function showOrders(){
-  if(orderHistory.length === 0) return;
-  let html = `<h3>📒 Order History</h3><table><tr><th>Type</th><th>Price</th><th>Time</th></tr>`;
-  orderHistory.slice(-5).forEach(o=>{
-    html += `<tr><td style="color:${o.type=='BUY'?'#22c55e':'#ef4444'}">${o.type}</td><td>${o.price}</td><td>${o.time}</td></tr>`
-  });
-  html += `</table>`;
-  document.getElementById('orders').innerHTML = html;
-}
-
-let candleSeries, volumeSeries, ema9Series, ema15Series, chart;
-
-function initChart() {
-  try {
-    chart = LightweightCharts.createChart(document.getElementById('chart'), {
-        layout: { background: { color: '#0b0e14' }, textColor: '#DDD' }
-    });
-    candleSeries = chart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444', priceScaleId: 'right' });
-    volumeSeries = chart.addHistogramSeries({ priceScaleId: 'volume' });
-    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
-    ema9Series = chart.addLineSeries({ color: '#FFD700', lineWidth: 2, priceScaleId: 'right' });
-    ema15Series = chart.addLineSeries({ color: '#00BFFF', lineWidth: 2, priceScaleId: 'right' });
-
-    let price = 24300;
-    for(let i = 0; i < 100; i++){
-        price += (Math.random() - 0.5) * 30;
-        candleData.push({
-            time: Math.floor(Date.now()/1000) - (100-i)*15*60,
-            open: price, high: price + 20, low: price - 20, close: price,
-            volume: Math.random() * 100000
-        })
-    }
-    updateChart();
-    showOrders();
-  } catch(e) {
-    alert("Chart Error: " + e.message + ". Page Refresh करो");
-  }
-}
-
-function updateChart(){
-    candleSeries.setData(candleData);
-    volumeSeries.setData(candleData.map(d=>({time:d.time, value:d.volume, color:d.close>d.open?'#26a69a80':'#ef535080'})));
-    const closes = candleData.map(c => c.close);
-    const ema9 = calculateEMA(closes, 9);
-    const ema15 = calculateEMA(closes, 15);
-    ema9Series.setData(ema9.map((val, i) => ({ time: candleData[i+8].time, value: val })));
-    ema15Series.setData(ema15.map((val, i) => ({ time: candleData[i+14].time, value: val })));
-    const last9 = ema9[ema9.length-1]; const last15 = ema15[ema15.length-1];
-    if(last9 > last15){
-      document.getElementById('signal').innerText = "BUY SIGNAL";
-      document.getElementById('signal').style.color = "#22c55e";
-    } else {
-      document.getElementById('signal').innerText = "SELL SIGNAL";
-      document.getElementById('signal').style.color = "#ef4444";
-    }
-    chart.timeScale().fitContent();
-}
-
-setInterval(() => {
-  if(candleData.length > 0){
-    const last = candleData[candleData.length-1];
-    const newPrice = last.close + (Math.random() - 0.5) * 10;
-    candleData.push({time: last.time + 15*60, open: last.close, high: newPrice+10, low: newPrice-10, close: newPrice, volume: Math.random() * 50000})
-    if(candleData.length > 150) candleData.shift();
-    updateChart();
-  }
-}, 5000);
-
-window.onload = initChart;
-</script>
-</body>
-</html>
+  <table><tr><th>Stock</th>
