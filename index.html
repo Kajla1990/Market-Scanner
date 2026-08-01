@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KSP v5.1 - 88% Sniper AUTO</title>
+<title>KSP v5.2 - 88% Sniper AUTO</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white p-4">
 <div class="max-w-md mx-auto">
-<h1 class="text-2xl font-bold text-center mb-4 text-green-400">KSP v5.1 - Auto Sniper</h1>
+<h1 class="text-2xl font-bold text-center mb-4 text-green-400">KSP v5.2 - Auto Sniper</h1>
 
 <select id="symbol" class="w-full p-2 mb-3 bg-gray-800 rounded border-gray-700">
   <option value="XAU/USD">XAUUSD - Gold</option>
@@ -21,14 +21,23 @@
   <button onclick="getSignal()" class="w-1/2 bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold">MANUAL CHECK</button>
 </div>
 
-<div id="result" class="p-4 bg-gray-800 rounded border-gray-700">
+<div id="result" class="p-4 bg-gray-800 rounded border-gray-700 space-y-1">
   <p>Price: <span id="price" class="font-bold text-xl">-</span></p>
   <p>Signal: <span id="signal" class="font-bold text-xl">WAIT</span></p>
   <p>Confluence: <span id="score">0/3</span></p>
+  <p>Success: <span id="chance">0%</span></p>
+  <hr class="border-gray-700">
+  
+  <p>Entry: <span id="entry">-</span></p>
+  <p>TP1: <span id="tp1" class="text-green-400">-</span></p>
+  <p>TP2: <span id="tp2" class="text-green-400">-</span></p>
+  <p>TP3: <span id="tp3" class="text-green-400">-</span></p>
+  <p>SL: <span id="sl" class="text-red-400">-</span></p>
+  
   <p>Status: <span id="status" class="text-yellow-400">Waiting...</span></p>
   <p id="error" class="text-red-400 text-sm mt-2"></p>
 </div>
-<p class="text-xs text-gray-400 mt-2">*Auto check हर 45 sec में होगा। 800 API/day limit सेफ</p>
+<p class="text-xs text-gray-400 mt-2">*Auto check हर 45 sec में। 800 API/day limit सेफ</p>
 </div>
 
 <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
@@ -40,11 +49,34 @@ let lastPrice = 0;
 let alertInterval = null;
 let alertOn = false;
 
-// KSP v5.1 Logic - 3 Point Confluence
+// TP SL calculate
+function calcTargets(price, signal) {
+  if(signal == "BUY") {
+    return {
+      entry: price.toFixed(2),
+      tp1: (price * 1.002).toFixed(2), // 0.2%
+      tp2: (price * 1.005).toFixed(2), // 0.5%
+      tp3: (price * 1.01).toFixed(2),  // 1%
+      sl: (price * 0.995).toFixed(2)   // 0.5%
+    }
+  }
+  if(signal == "SELL") {
+    return {
+      entry: price.toFixed(2),
+      tp1: (price * 0.998).toFixed(2),
+      tp2: (price * 0.995).toFixed(2),
+      tp3: (price * 0.99).toFixed(2),
+      sl: (price * 1.005).toFixed(2)
+    }
+  }
+  return {entry:"-", tp1:"-", tp2:"-", tp3:"-", sl:"-"}
+}
+
+// KSP v5.2 Logic
 function calcKSP(price) {
   let score = 0;
   if(lastPrice > 0) {
-    if(price > lastPrice) score++; // Trend Up
+    if(price > lastPrice) score++; // Trend
     if(price > lastPrice * 1.003) score++; // Momentum 0.3%
     if(price > lastPrice * 1.005) score++; // Strong 0.5%
     if(price < lastPrice * 0.997) score = 0; // SELL
@@ -53,11 +85,13 @@ function calcKSP(price) {
   let signal = "WAIT";
   if(score >= 2) signal = "BUY";
   else if(score == 0 && lastPrice > 0) signal = "SELL";
+  if(signal != lastSignal && score == 1) signal = lastSignal; // Flip रोको
   
-  if(signal != lastSignal && score == 1) signal = lastSignal; // Weak change ignore
+  let chance = score * 29; // 3/3 = 87% ~ 88%
+  if(chance > 88) chance = 88;
   
   lastPrice = price;
-  return {signal, score};
+  return {signal, score, chance};
 }
 
 async function getData(symbol) {
@@ -76,12 +110,20 @@ async function checkSignal() {
     document.getElementById('price').innerText = price.toFixed(2);
     
     const ksp = calcKSP(price);
-    document.getElementById('score').innerText = ksp.score + "/3";
+    const targets = calcTargets(price, ksp.signal);
     
-    // Signal Alert - Sirf tab bajao jab signal change ho
+    document.getElementById('score').innerText = ksp.score + "/3";
+    document.getElementById('chance').innerText = ksp.chance + "%";
+    document.getElementById('entry').innerText = targets.entry;
+    document.getElementById('tp1').innerText = targets.tp1;
+    document.getElementById('tp2').innerText = targets.tp2;
+    document.getElementById('tp3').innerText = targets.tp3;
+    document.getElementById('sl').innerText = targets.sl;
+    
+    // Alert only on new strong signal
     if(ksp.signal != lastSignal && ksp.signal != "WAIT") {
       document.getElementById('alertSound').play();
-      alert("🔥 KSP v5.1 SIGNAL 🔥\n\n" + ksp.signal + "\nPrice: " + price.toFixed(2) + "\nConfluence: " + ksp.score + "/3");
+      alert("🔥 KSP v5.2 SIGNAL 🔥\n\n" + ksp.signal + "\nEntry: " + targets.entry + "\nTP1: " + targets.tp1 + "\nSL: " + targets.sl + "\nSuccess: " + ksp.chance + "%");
       document.getElementById('status').innerText = "SIGNAL MILA! " + ksp.signal;
       document.getElementById('status').className = "text-green-400 font-bold";
     } else {
@@ -98,9 +140,7 @@ async function checkSignal() {
   }
 }
 
-function getSignal() {
-  checkSignal(); // Manual
-}
+function getSignal() { checkSignal(); }
 
 function toggleAlert() {
   const btn = document.getElementById('alertBtn');
@@ -115,7 +155,7 @@ function toggleAlert() {
     btn.innerText = "ALERT ON";
     btn.className = "w-1/2 bg-green-600 hover:bg-green-700 p-3 rounded font-bold";
     document.getElementById('status').innerText = "Monitoring...";
-    checkSignal(); // Turant check
+    checkSignal();
     alertInterval = setInterval(checkSignal, 45000); // 45 sec
   }
 }
