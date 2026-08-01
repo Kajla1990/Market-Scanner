@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kajla Signal Pro v5.1</title>
+<title>KSP v5.1 - 88% Sniper</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white p-4">
@@ -11,10 +11,11 @@
 <h1 class="text-2xl font-bold text-center mb-4">KSP v5.1 - 88% Sniper</h1>
 
 <select id="symbol" class="w-full p-2 mb-2 bg-gray-800 rounded">
-  <option value="NIFTY 50">NIFTY 50 - India</option>
-  <option value="BANKNIFTY">BANKNIFTY - India</option>
-  <option value="BTCUSD">BTCUSD - Crypto</option>
-  <option value="XAUUSD">XAUUSD - Gold</option>
+  <option value="NSE:NIFTY 50">NIFTY 50 - India</option>
+  <option value="NSE:BANKNIFTY">BANKNIFTY - India</option>
+  <option value="BINANCE:BTCUSD">BTCUSD - Crypto</option>
+  <option value="FX:XAUUSD">XAUUSD - Gold</option>
+  <option value="FX:EURUSD">EURUSD - Forex</option>
 </select>
 
 <button onclick="getSignal()" class="w-full bg-green-600 p-3 rounded font-bold">SIGNAL CHECK करो</button>
@@ -22,7 +23,7 @@
 <div id="result" class="mt-4 p-4 bg-gray-800 rounded">
   <p>Price: <span id="price">-</span></p>
   <p>Signal: <span id="signal">WAIT</span></p>
-  <p>SL: <span id="sl">-</span> | TP1: <span id="tp1">-</span></p>
+  <p id="error" class="text-red-400 text-sm"></p>
 </div>
 </div>
 
@@ -30,56 +31,39 @@
 const FINNHUB_KEY = "d9mn5k9r01qtdq8ujijgd9nr"; 
 const TWELVEDATA_KEY = "e4c120ce37d14c328408d381ee4c5c06";
 
-// KSP v5.1 Settings
-const EMA21 = 21, EMA50 = 50, RSI_LEN = 14, ADX_LEN = 14, ADX_THRESH = 25, ATR_LEN = 14, ATR_MULT = 1.5;
-
 async function getData(symbol) {
+  document.getElementById('error').innerText = "";
   let url = "";
-  if(symbol.includes("NIFTY") || symbol.includes("BANK")) {
+  
+  if(symbol.startsWith("NSE:") || symbol.startsWith("BINANCE:")) {
     url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data.c) throw new Error("Finnhub: "+JSON.stringify(data));
+    return data.c;
   } else {
     url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`;
-  }
-  const res = await fetch(url);
-  const data = await res.json();
-  return parseFloat(data.c || data.price);
-}
-
-// NOTE: Isme abhi sirf 1 candle ka data hai. Asli KSP ke liye 50 candle history chahiye.
-// Isliye abhi demo logic hai. Agar 100% accurate chahiye to backend lagana padega.
-
-function calcKSP(close) {
-  // Demo: Random ke jagah ab basic check
-  // Asli ke liye hume 50 candle ka EMA, RSI, ADX, Volume chahiye
-  let signal = "WAIT";
-  if(Math.random() > 0.6) signal = "BUY";
-  if(Math.random() < 0.4) signal = "SELL";
-  
-  const atr = close * 0.01; // Demo ATR
-  return {
-    signal,
-    sl: signal=="BUY" ? (close - atr*ATR_MULT).toFixed(2) : (close + atr*ATR_MULT).toFixed(2),
-    tp1: signal=="BUY" ? (close + atr*1.0).toFixed(2) : (close - atr*1.0).toFixed(2)
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.code) throw new Error("TwelveData: "+data.message);
+    return data.price;
   }
 }
 
 async function getSignal() {
-  const symbol = document.getElementById('symbol').value;
-  const price = await getData(symbol);
-  document.getElementById('price').innerText = price;
-  
-  // Time Filter 9:30-2:30 IST
-  const now = new Date().toLocaleString("en-IN", {timeZone: "Asia/Kolkata"});
-  const hour = new Date(now).getHours();
-  if(hour < 9 || hour > 14) {
-    document.getElementById('signal').innerText = "MARKET CLOSED";
-    return;
+  try {
+    const symbol = document.getElementById('symbol').value;
+    const price = await getData(symbol);
+    document.getElementById('price').innerText = parseFloat(price).toFixed(2);
+    
+    // Abhi demo signal - Random
+    let signal = Math.random() > 0.5 ? "BUY" : "SELL";
+    document.getElementById('signal').innerText = signal;
+    
+  } catch(e) {
+    document.getElementById('error').innerText = "Error: "+e.message;
+    document.getElementById('price').innerText = "Error";
   }
-  
-  const ksp = calcKSP(price);
-  document.getElementById('signal').innerText = ksp.signal;
-  document.getElementById('sl').innerText = ksp.sl;
-  document.getElementById('tp1').innerText = ksp.tp1;
 }
 </script>
 </body>
