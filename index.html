@@ -3,75 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KSP v5.3 - 88% Sniper AUTO</title>
+<title>KSP v5.5 - FINAL FIX</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white p-4">
 <div class="max-w-md mx-auto">
-<h1 class="text-2xl font-bold text-center mb-4 text-green-400">KSP v5.3 - Auto Sniper</h1>
+<h1 class="text-2xl font-bold text-center mb-4 text-green-400">KSP v5.5 - Fixed</h1>
 
-<select id="symbol" class="w-full p-2 mb-3 bg-gray-800 rounded border-gray-700">
+<select id="symbol" class="w-full p-2 mb-3 bg-gray-800 rounded">
   <option value="XAU/USD">XAUUSD - Gold</option>
   <option value="EUR/USD">EURUSD - Forex</option>
-  <option value="BINANCE:BTCUSDT">BTCUSD - Crypto Binance</option>
+  <option value="BTC/USD">BTCUSD - Crypto</option>  <!-- YE BADAL DIYA -->
 </select>
 
 <div class="flex gap-2 mb-3">
-  <button id="alertBtn" onclick="toggleAlert()" class="w-1/2 bg-red-600 hover:bg-red-700 p-3 rounded font-bold">ALERT OFF</button>
-  <button onclick="getSignal()" class="w-1/2 bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold">MANUAL CHECK</button>
+  <button id="alertBtn" onclick="toggleAlert()" class="w-1/2 bg-red-600 p-3 rounded font-bold">ALERT OFF</button>
+  <button onclick="getSignal()" class="w-1/2 bg-blue-600 p-3 rounded font-bold">CHECK</button>
 </div>
 
-<div id="result" class="p-4 bg-gray-800 rounded border-gray-700 space-y-1">
-  <p>Price: <span id="price" class="font-bold text-xl">-</span></p>
-  <p>Signal: <span id="signal" class="font-bold text-xl">WAIT</span></p>
-  <p>Confluence: <span id="score">0/3</span></p>
+<div class="p-4 bg-gray-800 rounded space-y-1">
+  <p>Price: <span id="price">-</span></p>
+  <p>Signal: <span id="signal">WAIT</span></p>
   <p>Success: <span id="chance">0%</span></p>
-  <hr class="border-gray-700 my-2">
   <p>Entry: <span id="entry">-</span></p>
-  <p>TP1: <span id="tp1" class="text-green-400">-</span></p>
-  <p>TP2: <span id="tp2" class="text-green-400">-</span></p>
-  <p>TP3: <span id="tp3" class="text-green-400">-</span></p>
-  <p>SL: <span id="sl" class="text-red-400">-</span></p>
-  <p>Status: <span id="status" class="text-yellow-400">Waiting...</span></p>
-  <p id="error" class="text-red-400 text-sm mt-2"></p>
+  <p>TP1: <span id="tp1">-</span> TP2: <span id="tp2">-</span> TP3: <span id="tp3">-</span></p>
+  <p>SL: <span id="sl">-</span></p>
+  <p id="error" class="text-red-400"></p>
 </div>
-<p class="text-xs text-gray-400 mt-2">*Auto check हर 45 sec में। 800 API/day limit सेफ</p>
 </div>
 
 <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
 <script>
-const TWELVEDATA_KEY = "e4c120ce37d14c328408d381ee4c5c06";
+const KEY = "e4c120ce37d14c328408d381ee4c5c06";
 let lastSignal = "WAIT";
 let lastPrice = 0;
 let alertInterval = null;
 let alertOn = false;
 
-// TP SL calculate
-function calcTargets(price, signal) {
-  if(signal == "BUY") {
-    return {
-      entry: price.toFixed(2),
-      tp1: (price * 1.002).toFixed(2),
-      tp2: (price * 1.005).toFixed(2),
-      tp3: (price * 1.01).toFixed(2),
-      sl: (price * 0.995).toFixed(2)
-    }
-  }
-  if(signal == "SELL") {
-    return {
-      entry: price.toFixed(2),
-      tp1: (price * 0.998).toFixed(2),
-      tp2: (price * 0.995).toFixed(2),
-      tp3: (price * 0.99).toFixed(2),
-      sl: (price * 1.005).toFixed(2)
-    }
-  }
-  return {entry:"-", tp1:"-", tp2:"-", tp3:"-", sl:"-"}
+async function getData(symbol) {
+  let url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${KEY}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if(data.code) throw new Error(data.message);
+  return parseFloat(data.price);
 }
 
-// KSP v5.3 Logic
-function calcKSP(price) {
+function calc(price) {
   let score = 0;
   if(lastPrice > 0) {
     if(price > lastPrice) score++;
@@ -79,66 +57,48 @@ function calcKSP(price) {
     if(price > lastPrice * 1.005) score++;
     if(price < lastPrice * 0.997) score = 0;
   }
-  
   let signal = "WAIT";
   if(score >= 2) signal = "BUY";
   else if(score == 0 && lastPrice > 0) signal = "SELL";
-  if(signal != lastSignal && score == 1) signal = lastSignal;
-  
   let chance = score * 29;
   if(chance > 88) chance = 88;
-  
   lastPrice = price;
-  return {signal, score, chance};
+  return {signal, chance};
 }
 
-async function getData(symbol) {
-  let url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if(data.code) throw new Error(data.message);
-  return parseFloat(data.price);
+function calcTP(price, signal) {
+  if(signal == "BUY") return {entry:price.toFixed(2), tp1:(price*1.002).toFixed(2), tp2:(price*1.005).toFixed(2), tp3:(price*1.01).toFixed(2), sl:(price*0.995).toFixed(2)}
+  if(signal == "SELL") return {entry:price.toFixed(2), tp1:(price*0.998).toFixed(2), tp2:(price*0.995).toFixed(2), tp3:(price*0.99).toFixed(2), sl:(price*1.005).toFixed(2)}
+  return {entry:"-", tp1:"-", tp2:"-", tp3:"-", sl:"-"}
 }
 
-async function checkSignal() {
+async function getSignal() {
   try {
     document.getElementById('error').innerText = "";
     const symbol = document.getElementById('symbol').value;
     const price = await getData(symbol);
     document.getElementById('price').innerText = price.toFixed(2);
     
-    const ksp = calcKSP(price);
-    const targets = calcTargets(price, ksp.signal);
+    const k = calc(price);
+    const t = calcTP(price, k.signal);
     
-    document.getElementById('score').innerText = ksp.score + "/3";
-    document.getElementById('chance').innerText = ksp.chance + "%";
-    document.getElementById('entry').innerText = targets.entry;
-    document.getElementById('tp1').innerText = targets.tp1;
-    document.getElementById('tp2').innerText = targets.tp2;
-    document.getElementById('tp3').innerText = targets.tp3;
-    document.getElementById('sl').innerText = targets.sl;
+    document.getElementById('chance').innerText = k.chance + "%";
+    document.getElementById('entry').innerText = t.entry;
+    document.getElementById('tp1').innerText = t.tp1;
+    document.getElementById('tp2').innerText = t.tp2;
+    document.getElementById('tp3').innerText = t.tp3;
+    document.getElementById('sl').innerText = t.sl;
+    document.getElementById('signal').innerText = k.signal;
     
-    // SIRF 2/3 ya 3/3 par hi alert bajega
-    if(ksp.signal != lastSignal && ksp.signal != "WAIT" && ksp.score >= 2) {
+    if(k.signal != lastSignal && k.signal != "WAIT" && k.chance >= 58) {
       document.getElementById('alertSound').play();
-      alert("🔥 KSP v5.3 SIGNAL 🔥\n\n" + ksp.signal + "\nEntry: " + targets.entry + "\nTP1: " + targets.tp1 + "\nTP2: " + targets.tp2 + "\nTP3: " + targets.tp3 + "\nSL: " + targets.sl + "\nSuccess: " + ksp.chance + "%");
-      document.getElementById('status').innerText = "SIGNAL MILA! " + ksp.signal;
-      document.getElementById('status').className = "text-green-400 font-bold";
-    } else {
-      document.getElementById('status').innerText = "Monitoring...";
-      document.getElementById('status').className = "text-yellow-400";
+      alert("🔥 " + k.signal + " SIGNAL 🔥\nEntry: " + t.entry + "\nTP1: " + t.tp1 + "\nSL: " + t.sl);
     }
-    
-    lastSignal = ksp.signal;
-    document.getElementById('signal').innerText = ksp.signal;
-    document.getElementById('signal').className = ksp.signal=="BUY" ? "text-green-400 font-bold text-xl" : ksp.signal=="SELL" ? "text-red-400 font-bold text-xl" : "text-yellow-400 font-bold text-xl";
-    
+    lastSignal = k.signal;
   } catch(e) {
     document.getElementById('error').innerText = "Error: " + e.message;
   }
 }
-
-function getSignal() { checkSignal(); }
 
 function toggleAlert() {
   const btn = document.getElementById('alertBtn');
@@ -146,15 +106,13 @@ function toggleAlert() {
     clearInterval(alertInterval);
     alertOn = false;
     btn.innerText = "ALERT OFF";
-    btn.className = "w-1/2 bg-red-600 hover:bg-red-700 p-3 rounded font-bold";
-    document.getElementById('status').innerText = "Stopped";
+    btn.className = "w-1/2 bg-red-600 p-3 rounded font-bold";
   } else {
     alertOn = true;
     btn.innerText = "ALERT ON";
-    btn.className = "w-1/2 bg-green-600 hover:bg-green-700 p-3 rounded font-bold";
-    document.getElementById('status').innerText = "Monitoring...";
-    checkSignal();
-    alertInterval = setInterval(checkSignal, 45000);
+    btn.className = "w-1/2 bg-green-600 p-3 rounded font-bold";
+    getSignal();
+    alertInterval = setInterval(getSignal, 45000);
   }
 }
 </script>
