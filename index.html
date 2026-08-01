@@ -10,10 +10,10 @@
 <div class="max-w-md mx-auto">
 <h1 class="text-2xl font-bold text-center mb-4 text-green-400">KSP v5.1 - 88% Sniper</h1>
 
-<select id="symbol" class="w-full p-2 mb-2 bg-gray-800 rounded border border-gray-700">
+<select id="symbol" class="w-full p-2 mb-2 bg-gray-800 rounded border-gray-700">
   <option value="XAU/USD">XAUUSD - Gold</option>
   <option value="EUR/USD">EURUSD - Forex</option>
-  <option value="BTC/USD">BTCUSD - Crypto</option>
+  <option value="BINANCE:BTCUSDT">BTCUSD - Crypto Binance</option>
 </select>
 
 <button id="btn" onclick="getSignal()" class="w-full bg-green-600 hover:bg-green-700 p-3 rounded font-bold">SIGNAL CHECK करो</button>
@@ -30,27 +30,29 @@
 <script>
 const TWELVEDATA_KEY = "e4c120ce37d14c328408d381ee4c5c06";
 let lastSignal = "WAIT";
+let lastPrice = 0;
 
-// KSP v5.1 Basic Trend - 3 Point Confluence
-function calcKSP(price, prevPrice) {
+// KSP v5.1 Basic Trend Logic
+function calcKSP(price) {
   let score = 0;
   
-  // f1: Trend - Price upar hai kya
-  if(price > prevPrice) score++;
-  
-  // f2: Momentum - 0.3% ka move
-  if(price > prevPrice * 1.003) score++;
-  
-  // f3: Strength - 0.5% ka move
-  if(price > prevPrice * 1.005) score++;
+  if(lastPrice > 0) {
+    // f1: Trend up
+    if(price > lastPrice) score++;
+    // f2: Momentum 0.3%
+    if(price > lastPrice * 1.003) score++;
+    // f3: Strong move 0.5%
+    if(price > lastPrice * 1.005) score++;
+  }
   
   let signal = "WAIT";
   if(score >= 2) signal = "BUY";
-  if(score <= 0 && price < prevPrice * 0.997) signal = "SELL";
+  else if(price < lastPrice * 0.997) signal = "SELL";
   
-  // Signal tabhi change hoga jab strong reason ho
-  if(signal != lastSignal && score < 2) signal = lastSignal;
+  // Signal tabhi change karo jab strong ho
+  if(signal != lastSignal && score < 2 && lastSignal != "WAIT") signal = lastSignal;
   
+  lastPrice = price;
   return {signal, score};
 }
 
@@ -72,11 +74,10 @@ async function getSignal() {
   try {
     const symbol = document.getElementById('symbol').value;
     const price = await getData(symbol);
-    const prevPrice = parseFloat(document.getElementById('price').innerText) || price;
     
     document.getElementById('price').innerText = price.toFixed(2);
     
-    const ksp = calcKSP(price, prevPrice);
+    const ksp = calcKSP(price);
     lastSignal = ksp.signal;
     
     document.getElementById('signal').innerText = ksp.signal;
@@ -87,7 +88,6 @@ async function getSignal() {
     document.getElementById('error').innerText = "Error: "+e.message + " 1 min baad try karo";
   }
   
-  // 10 sec cooldown - API limit bachane ke liye
   setTimeout(()=>{
     btn.disabled = false;
     btn.classList.remove('bg-gray-600');
