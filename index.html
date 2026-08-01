@@ -3,97 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KSP v5.1 - 88% Sniper</title>
+<title>KSP v5.1 - 88% Sniper AUTO</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white p-4">
 <div class="max-w-md mx-auto">
-<h1 class="text-2xl font-bold text-center mb-4 text-green-400">KSP v5.1 - 88% Sniper</h1>
+<h1 class="text-2xl font-bold text-center mb-4 text-green-400">KSP v5.1 - Auto Sniper</h1>
 
-<select id="symbol" class="w-full p-2 mb-2 bg-gray-800 rounded border-gray-700">
+<select id="symbol" class="w-full p-2 mb-3 bg-gray-800 rounded border border-gray-700">
   <option value="XAU/USD">XAUUSD - Gold</option>
   <option value="EUR/USD">EURUSD - Forex</option>
   <option value="BINANCE:BTCUSDT">BTCUSD - Crypto Binance</option>
 </select>
 
-<button id="btn" onclick="getSignal()" class="w-full bg-green-600 hover:bg-green-700 p-3 rounded font-bold">SIGNAL CHECK करो</button>
-
-<div id="result" class="mt-4 p-4 bg-gray-800 rounded border-gray-700">
-  <p>Price: <span id="price" class="font-bold">-</span></p>
-  <p>Signal: <span id="signal" class="font-bold">WAIT</span></p>
-  <p>Confluence: <span id="score">0/3</span></p>
-  <p id="error" class="text-red-400 text-sm mt-2"></p>
-</div>
-<p class="text-xs text-gray-400 mt-2">*Note: 10 sec me 1 hi signal. Free API limit ke liye</p>
-</div>
-
-<script>
-const TWELVEDATA_KEY = "e4c120ce37d14c328408d381ee4c5c06";
-let lastSignal = "WAIT";
-let lastPrice = 0;
-
-// KSP v5.1 Basic Trend Logic
-function calcKSP(price) {
-  let score = 0;
-  
-  if(lastPrice > 0) {
-    // f1: Trend up
-    if(price > lastPrice) score++;
-    // f2: Momentum 0.3%
-    if(price > lastPrice * 1.003) score++;
-    // f3: Strong move 0.5%
-    if(price > lastPrice * 1.005) score++;
-  }
-  
-  let signal = "WAIT";
-  if(score >= 2) signal = "BUY";
-  else if(price < lastPrice * 0.997) signal = "SELL";
-  
-  // Signal tabhi change karo jab strong ho
-  if(signal != lastSignal && score < 2 && lastSignal != "WAIT") signal = lastSignal;
-  
-  lastPrice = price;
-  return {signal, score};
-}
-
-async function getData(symbol) {
-  let url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if(data.code) throw new Error(data.message);
-  return parseFloat(data.price);
-}
-
-async function getSignal() {
-  const btn = document.getElementById('btn');
-  btn.disabled = true;
-  btn.classList.add('bg-gray-600');
-  btn.innerText = "10 sec wait...";
-  document.getElementById('error').innerText = "";
-  
-  try {
-    const symbol = document.getElementById('symbol').value;
-    const price = await getData(symbol);
-    
-    document.getElementById('price').innerText = price.toFixed(2);
-    
-    const ksp = calcKSP(price);
-    lastSignal = ksp.signal;
-    
-    document.getElementById('signal').innerText = ksp.signal;
-    document.getElementById('signal').className = ksp.signal=="BUY" ? "text-green-400 font-bold" : ksp.signal=="SELL" ? "text-red-400 font-bold" : "text-yellow-400 font-bold";
-    document.getElementById('score').innerText = ksp.score + "/3";
-    
-  } catch(e) {
-    document.getElementById('error').innerText = "Error: "+e.message + " 1 min baad try karo";
-  }
-  
-  setTimeout(()=>{
-    btn.disabled = false;
-    btn.classList.remove('bg-gray-600');
-    btn.innerText = "SIGNAL CHECK करो";
-  }, 10000);
-}
-</script>
-</body>
-</html>
+<div class="flex gap-2 mb-3">
+  <button id="alertBtn" onclick="toggleAlert()" class="w-1/2 bg-red-600 hover:bg-red-700 p-3 rounded font-bold">ALERT OFF</button>
+  <button onclick="getSignal()" class="w-1/2 bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold">MANUAL CHECK</button>
+</div
