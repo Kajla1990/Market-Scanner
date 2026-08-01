@@ -11,11 +11,9 @@
 <h1 class="text-2xl font-bold text-center mb-4">KSP v5.1 - 88% Sniper</h1>
 
 <select id="symbol" class="w-full p-2 mb-2 bg-gray-800 rounded">
-  <option value="NSE:NIFTY 50">NIFTY 50 - India</option>
-  <option value="NSE:BANKNIFTY">BANKNIFTY - India</option>
-  <option value="BINANCE:BTCUSD">BTCUSD - Crypto</option>
-  <option value="FX:XAUUSD">XAUUSD - Gold</option>
-  <option value="FX:EURUSD">EURUSD - Forex</option>
+  <option value="XAU/USD">XAUUSD - Gold</option>
+  <option value="EUR/USD">EURUSD - Forex</option>
+  <option value="BTC/USD">BTCUSD - Crypto</option>
 </select>
 
 <button onclick="getSignal()" class="w-full bg-green-600 p-3 rounded font-bold">SIGNAL CHECK करो</button>
@@ -28,26 +26,17 @@
 </div>
 
 <script>
-const FINNHUB_KEY = "d9mn5k9r01qtdq8ujijgd9nr"; 
-const TWELVEDATA_KEY = "e4c120ce37d14c328408d381ee4c5c06";
+const TWELVEDATA_KEY = "e4c120ce37d14c328408d381ee4c5c06"; // Sirf ye wali key use hogi
 
 async function getData(symbol) {
   document.getElementById('error').innerText = "";
-  let url = "";
+  // TwelveData Time Series 1 candle
+  let url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`;
   
-  if(symbol.startsWith("NSE:") || symbol.startsWith("BINANCE:")) {
-    url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(!data.c) throw new Error("Finnhub: "+JSON.stringify(data));
-    return data.c;
-  } else {
-    url = `https://api.twelvedata.com/price?symbol=${symbol}&apikey=${TWELVEDATA_KEY}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(data.code) throw new Error("TwelveData: "+data.message);
-    return data.price;
-  }
+  const res = await fetch(url);
+  const data = await res.json();
+  if(data.code) throw new Error(data.message);
+  return data.price;
 }
 
 async function getSignal() {
@@ -56,7 +45,7 @@ async function getSignal() {
     const price = await getData(symbol);
     document.getElementById('price').innerText = parseFloat(price).toFixed(2);
     
-    // Abhi demo signal - Random
+    // Demo signal for now
     let signal = Math.random() > 0.5 ? "BUY" : "SELL";
     document.getElementById('signal').innerText = signal;
     
